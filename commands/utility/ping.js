@@ -21,8 +21,7 @@ ${client.config.emojis.time} **WebSocket**
 >>> \`${client.ws.ping}ms\`
 
 ${client.config.emojis.gear} **Bot Status**
- <:upgrade:1494364520850784348>
- Online
+ <:upgrade:1494364520850784348>Online
 
 ${client.config.emojis.member} **Guilds**
  \`${client.guilds.cache.size}\`
