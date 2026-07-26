@@ -1,10 +1,9 @@
 const { EmbedBuilder } = require("discord.js");
 
 module.exports = {
-
     name: "ping",
     aliases: ["p"],
-    description: "Shows bot latency.",
+    description: "Shows bot ping.",
 
     async execute(client, message) {
 
@@ -13,22 +12,18 @@ module.exports = {
             .setAuthor({
                 name: `${client.config.botName} • Utility`
             })
-            .setDescription(
-`${client.config.emojis.stats} **Bot Statistics**
+            .setDescription(`
+${client.config.emojis.stats} **Bot Statistics**
 
-${client.config.emojis.time} **Latency**
+${client.config.emojis.time} **Ping**
 > \`${client.ws.ping}ms\`
 
-${client.config.emojis.gear} **Status**
-> Online
+${client.config.emojis.success} Pong!
+`)
+            .setTimestamp();
 
-<:green_tick:1530887008581587095> **Request Completed Successfully**`
-            );
-
-        message.reply({
+        return message.reply({
             embeds: [embed]
         });
-
     }
-
 };
