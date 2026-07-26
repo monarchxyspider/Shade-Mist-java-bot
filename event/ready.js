@@ -1,1 +1,9 @@
-1
+module.exports = {
+    name: "ready",
+    once: true,
+
+    execute(client) {
+        console.log(`🤖 Logged in as ${client.user.tag}`);
+        console.log("❤️ ShadeMist V2 Online!");
+    }
+};
