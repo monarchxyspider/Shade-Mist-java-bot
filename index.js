@@ -1,10 +1,8 @@
 require("dotenv").config();
 
-const {
-    Client,
-    GatewayIntentBits,
-    Collection
-} = require("discord.js");
+const { Client, GatewayIntentBits, Collection } = require("discord.js");
+
+const config = require("./config/config");
 
 const commandHandler = require("./handlers/commandHandler");
 const eventHandler = require("./handlers/eventHandler");
@@ -12,8 +10,8 @@ const eventHandler = require("./handlers/eventHandler");
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMembers,
         GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildMembers,
         GatewayIntentBits.MessageContent
     ]
 });
@@ -21,7 +19,7 @@ const client = new Client({
 client.commands = new Collection();
 client.aliases = new Collection();
 
-client.prefix = "S!";
+client.config = config;
 
 commandHandler(client);
 eventHandler(client);
