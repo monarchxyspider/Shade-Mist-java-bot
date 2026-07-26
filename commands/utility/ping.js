@@ -1,31 +1,58 @@
-const { EmbedBuilder } = require("discord.js");
+const {
+    EmbedBuilder,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle
+} = require("discord.js");
 
 module.exports = {
     name: "ping",
     aliases: ["p"],
-    description: "Check bot latency.",
+    description: "Shows the bot latency.",
 
     async execute(client, message) {
 
         const embed = new EmbedBuilder()
             .setColor(client.config.embedColor)
             .setAuthor({
-                name: `${client.config.botName} • Ping`,
+                name: `${client.config.botName} • Bot Statistics`,
                 iconURL: client.user.displayAvatarURL()
             })
-            .setDescription([
-                `${client.config.emojis.stats} **Bot Statistics**`,
-                "",
-                `${client.config.emojis.time} **WebSocket Ping**`,
-                `> \`${client.ws.ping}ms\``,
-                "",
-                `${client.config.emojis.success} **Status**`,
-                `> Online`
-            ].join("\n"))
+            .setDescription(
+`${client.config.emojis.stats} **Bot Statistics**
+
+${client.config.emojis.time} **WebSocket Ping**
+> \`${client.ws.ping}ms\`
+
+${client.config.emojis.gear} **Bot Status**
+> Online
+
+${client.config.emojis.success} **Response**
+> Successfully Responded`
+            )
+            .setThumbnail(client.user.displayAvatarURL())
+            .setFooter({
+                text: client.config.botName
+            })
             .setTimestamp();
 
+        const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setLabel("Support Server")
+                .setStyle(ButtonStyle.Link)
+                .setURL(client.config.supportServer),
+
+            new ButtonBuilder()
+                .setLabel("Ping")
+                .setStyle(ButtonStyle.Secondary)
+                .setDisabled(true)
+                .setEmoji("🏓")
+        );
+
         return message.reply({
-            embeds: [embed]
+            embeds: [embed],
+            components: [row]
         });
+
     }
 };
