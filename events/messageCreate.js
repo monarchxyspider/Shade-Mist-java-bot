@@ -1,7 +1,7 @@
 module.exports = {
     name: "messageCreate",
 
-    async execute(message, client) {
+    async execute(client, message) {
 
         if (message.author.bot) return;
 
@@ -22,14 +22,13 @@ module.exports = {
         if (!command) return;
 
         try {
-            command.execute(client, message, args);
+            await command.execute(client, message, args);
         } catch (err) {
             console.error(err);
 
-            message.reply({
-                content: "❌ An error occurred while executing this command."
+            return message.reply({
+                content: `${client.config.emojis.error} An error occurred while executing this command.`
             });
         }
-
     }
 };
