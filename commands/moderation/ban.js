@@ -6,19 +6,19 @@ const {
 module.exports = {
     name: "ban",
     aliases: ["b"],
-    description: "Ban a member.",
+    description: "Ban a member from the server.",
 
     async execute(client, message, args) {
 
         if (!message.member.permissions.has(PermissionFlagsBits.BanMembers)) {
             return message.reply({
-                content: `${client.config.emojis.error} You need **Ban Members** permission to use this command.`
+                content: `${client.config.emojis.error} You need the **Ban Members** permission to use this command.`
             });
         }
 
         if (!message.guild.members.me.permissions.has(PermissionFlagsBits.BanMembers)) {
             return message.reply({
-                content: `${client.config.emojis.error} I don't have **Ban Members** permission.`
+                content: `${client.config.emojis.error} I don't have the **Ban Members** permission.`
             });
         }
 
@@ -34,37 +34,31 @@ module.exports = {
 
         if (member.id === message.author.id) {
             return message.reply({
-                content: `${client.config.emojis.error} You can't ban yourself.`
+                content: `${client.config.emojis.error} You cannot ban yourself.`
             });
         }
 
         if (member.id === client.user.id) {
             return message.reply({
-                content: `${client.config.emojis.error} I can't ban myself.`
+                content: `${client.config.emojis.error} I cannot ban myself.`
             });
         }
 
         if (member.id === message.guild.ownerId) {
             return message.reply({
-                content: `${client.config.emojis.error} You can't ban the server owner.`
+                content: `${client.config.emojis.error} You cannot ban the server owner.`
             });
         }
 
-        if (
-            member.roles.highest.position >=
-            message.member.roles.highest.position
-        ) {
+        if (member.roles.highest.position >= message.member.roles.highest.position) {
             return message.reply({
                 content: `${client.config.emojis.error} This member has an equal or higher role than you.`
             });
         }
 
-        if (
-            member.roles.highest.position >=
-            message.guild.members.me.roles.highest.position
-        ) {
+        if (member.roles.highest.position >= message.guild.members.me.roles.highest.position) {
             return message.reply({
-                content: `${client.config.emojis.error} My role is lower than that member's role.`
+                content: `${client.config.emojis.error} My highest role is lower than this member's role.`
             });
         }
 
@@ -75,10 +69,7 @@ module.exports = {
                 ? "No reason provided."
                 : args.slice(reasonIndex + 1).join(" ") || "No reason provided.";
 
-        // Part 2 continues here...
-        try {
-
-            const dmEmbed = new EmbedBuilder()
+        try {            const dmEmbed = new EmbedBuilder()
                 .setColor(client.config.embedColor)
                 .setAuthor({
                     name: `${client.config.botName} • Ban Notice`,
@@ -126,9 +117,11 @@ ${client.config.emojis.message} **Reason**
 >>> ${reason}
 `)
                 .setFooter({
-                    text: client.config.botName
+                    text: client.config.botName,
+                    iconURL: client.user.displayAvatarURL()
                 })
-                .setTimestamp
+                .setTimestamp();
+
             return message.reply({
                 embeds: [embed]
             });
