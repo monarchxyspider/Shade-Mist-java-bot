@@ -21,10 +21,10 @@ ${client.config.emojis.time} **WebSocket**
 >>> \`${client.ws.ping}ms\`
 
 ${client.config.emojis.gear} **Bot Status**
->>> 🟢 Online
+ "<:upgrade:1494364520850784348>" Online
 
 ${client.config.emojis.member} **Guilds**
->>> \`${client.guilds.cache.size}\`
+ \`${client.guilds.cache.size}\`
 
 ${client.config.emojis.user} **Users**
 >>> \`${client.users.cache.size}\`
