@@ -21,10 +21,10 @@ ${client.config.emojis.time} **WebSocket**
 >>> \`${client.ws.ping}ms\`
 
 ${client.config.emojis.gear} **Bot Status**
- <:upgrade:1494364520850784348>Online
+>>> <:upgrade:1494364520850784348> Online
 
 ${client.config.emojis.member} **Guilds**
- \`${client.guilds.cache.size}\`
+>>> \`${client.guilds.cache.size}\`
 
 ${client.config.emojis.user} **Users**
 >>> \`${client.users.cache.size}\`
@@ -32,7 +32,6 @@ ${client.config.emojis.user} **Users**
 ${client.config.emojis.success} **Response**
 >>> Successfully Responded
 `)
-            .setImage("https://i.imgur.com/4M34hi2.png") // Temporary divider
             .setFooter({
                 text: `${client.config.botName} • Utility`,
                 iconURL: client.user.displayAvatarURL()
