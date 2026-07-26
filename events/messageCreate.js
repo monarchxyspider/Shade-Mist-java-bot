@@ -7,7 +7,7 @@ module.exports = {
 
         if (!message.guild) return;
 
-        const prefix = client.prefix;
+        const prefix = client.config.prefix;
 
         if (!message.content.startsWith(prefix)) return;
 
