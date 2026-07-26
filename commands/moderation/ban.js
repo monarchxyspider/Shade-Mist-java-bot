@@ -129,3 +129,20 @@ ${client.config.emojis.message} **Reason**
                     text: client.config.botName
                 })
                 .setTimestamp
+            return message.reply({
+                embeds: [embed]
+            });
+
+        } catch (err) {
+
+            console.error(err);
+
+            return message.reply({
+                content: `${client.config.emojis.error} Failed to ban that member.`
+            });
+
+        }
+
+    }
+
+};
