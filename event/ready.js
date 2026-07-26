@@ -4,6 +4,6 @@ module.exports = {
 
     execute(client) {
         console.log(`🤖 Logged in as ${client.user.tag}`);
-        console.log("❤️ ShadeMist V2 Online!");
+        console.log(" ShadeMist Online!");
     }
 };
