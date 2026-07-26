@@ -22,7 +22,7 @@ ${client.config.emojis.time} **Latency**
 ${client.config.emojis.gear} **Status**
 > Online
 
-✔️ **Request Completed Successfully**`
+<:green_tick:1530887008581587095> **Request Completed Successfully**`
             );
 
         message.reply({
