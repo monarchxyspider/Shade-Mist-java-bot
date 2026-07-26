@@ -40,7 +40,7 @@ ${client.config.emojis.success} **Response**
             new ButtonBuilder()
                 .setLabel("Support Server")
                 .setStyle(ButtonStyle.Link)
-                .setURL(client.config.supportServer),
+                .setURL(https://discord.gg/54vJcse3),
 
             new ButtonBuilder()
                 .setLabel("Ping")
