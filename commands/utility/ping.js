@@ -1,4 +1,9 @@
-const { EmbedBuilder } = require("discord.js");
+const {
+    EmbedBuilder,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle
+} = require("discord.js");
 
 module.exports = {
     name: "ping",
@@ -34,8 +39,17 @@ ${client.config.emojis.user} __**Users**__
             })
             .setTimestamp();
 
+        const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setLabel("Support Server")
+                .setEmoji("<:list:1494365866916053022>")
+                .setStyle(ButtonStyle.Link)
+                .setURL("https://discord.gg/54vJcse3")
+        );
+
         return message.reply({
-            embeds: [embed]
+            embeds: [embed],
+            components: [row]
         });
     }
 };
