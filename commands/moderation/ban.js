@@ -6,13 +6,13 @@ const {
 module.exports = {
     name: "ban",
     aliases: ["b"],
-    description: "Ban a member from the server.",
+    description: "Ban a member.",
 
     async execute(client, message, args) {
 
         if (!message.member.permissions.has(PermissionFlagsBits.BanMembers)) {
             return message.reply({
-                content: `${client.config.emojis.error} You need the **Ban Members** permission to use this command.`
+                content: `${client.config.emojis.error} You don't have permission to use this command.`
             });
         }
 
@@ -29,6 +29,12 @@ module.exports = {
         if (!member) {
             return message.reply({
                 content: `${client.config.emojis.error} Please mention a valid member.`
+            });
+        }
+
+        if (!member.bannable) {
+            return message.reply({
+                content: `${client.config.emojis.error} I cannot ban this member.`
             });
         }
 
@@ -58,18 +64,19 @@ module.exports = {
 
         if (member.roles.highest.position >= message.guild.members.me.roles.highest.position) {
             return message.reply({
-                content: `${client.config.emojis.error} My highest role is lower than this member's role.`
+                content: `${client.config.emojis.error} My role is lower than this member's role.`
             });
         }
 
-        const reasonIndex = args.findIndex(arg => arg.toLowerCase() === "?r");
+        const reasonIndex = args.findIndex(x => x.toLowerCase() === "?r");
 
         const reason =
             reasonIndex === -1
                 ? "No reason provided."
                 : args.slice(reasonIndex + 1).join(" ") || "No reason provided.";
 
-        try {            const dmEmbed = new EmbedBuilder()
+        try {
+            const dmEmbed = new EmbedBuilder()
                 .setColor(client.config.embedColor)
                 .setAuthor({
                     name: `${client.config.botName} • Ban Notice`,
@@ -79,14 +86,17 @@ module.exports = {
 ${client.config.emojis.sword} **You have been banned**
 
 ${client.config.emojis.place} **Server**
->>> ${message.guild.name}
+> ${message.guild.name}
 
 ${client.config.emojis.moderator} **Moderator**
->>> ${message.author.tag}
+> ${message.author.tag}
 
 ${client.config.emojis.message} **Reason**
->>> ${reason}
+> ${reason}
 `)
+                .setFooter({
+                    text: client.config.botName
+                })
                 .setTimestamp();
 
             await member.send({
@@ -100,21 +110,21 @@ ${client.config.emojis.message} **Reason**
             const embed = new EmbedBuilder()
                 .setColor(client.config.embedColor)
                 .setAuthor({
-                    name: `${client.config.botName} • Ban`,
+                    name: `${client.config.botName} • Member Banned`,
                     iconURL: client.user.displayAvatarURL()
                 })
                 .setThumbnail(member.user.displayAvatarURL())
                 .setDescription(`
-${client.config.emojis.success} **Member Banned Successfully**
+${client.config.emojis.success} **Action Executed Successfully**
 
 ${client.config.emojis.user} **User**
->>> ${member.user.tag} (\`${member.id}\`)
+> ${member.user.tag} (\`${member.id}\`)
 
 ${client.config.emojis.moderator} **Moderator**
->>> ${message.author}
+> ${message.author}
 
 ${client.config.emojis.message} **Reason**
->>> ${reason}
+> ${reason}
 `)
                 .setFooter({
                     text: client.config.botName,
@@ -127,15 +137,12 @@ ${client.config.emojis.message} **Reason**
             });
 
         } catch (err) {
-
             console.error(err);
 
             return message.reply({
-                content: `${client.config.emojis.error} Failed to ban that member.`
+                content: `${client.config.emojis.error} Failed to ban this member.`
             });
-
         }
 
     }
-
 };
