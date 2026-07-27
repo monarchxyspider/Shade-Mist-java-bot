@@ -83,12 +83,12 @@ module.exports = {
                     iconURL: client.user.displayAvatarURL()
                 })
                 .setDescription(`
-${client.config.emojis.sword} **You have been kicked**
+${client.config.emojis.sword} _**You have been kicked**_
 
-${client.config.emojis.place} **Server**
+<:Book:1487485966544277514>_**Server**_
 > ${message.guild.name}
 
-${client.config.emojis.moderator} **Moderator**
+${client.config.emojis.moderator__**Moderator**__
 > ${message.author.tag}
 
 ${client.config.emojis.message} **Reason**
@@ -115,7 +115,7 @@ ${client.config.emojis.message} **Reason**
                 })
                 .setThumbnail(member.user.displayAvatarURL())
                 .setDescription(`
-${client.config.emojis.success} **Action Executed Successfully**
+ _**Action Executed Successfully**_ ${client.config.emojis.success}
 
 ${client.config.emojis.user} **User**
 > ${member.user.tag} (\`${member.id}\`)
