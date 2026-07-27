@@ -20,16 +20,12 @@ module.exports = {
             })
             .setDescription(`
 ${client.config.emojis.stats} __**Bot Statistics**__
-
 ${client.config.emojis.time} __**WebSocket**__
 > \`${client.ws.ping}ms\`
-
 ${client.config.emojis.gear} __**Bot Status**__
-> <:upgrade:1494364520850784348> Online
-
+> <:upgrade:1494364520850784348>
 ${client.config.emojis.member} __**Guilds**__
 > \`${client.guilds.cache.size}\`
-
 ${client.config.emojis.user} __**Users**__
 > \`${client.users.cache.size}\`
 `)
