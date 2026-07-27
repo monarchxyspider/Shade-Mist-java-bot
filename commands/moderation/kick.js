@@ -88,7 +88,7 @@ ${client.config.emojis.sword} _**You have been kicked**_
 <:Book:1487485966544277514>_**Server**_
 > ${message.guild.name}
 
-${client.config.emojis.moderator__**Moderator**__
+${client.config.emojis.moderator}__**Moderator**__
 > ${message.author.tag}
 
 ${client.config.emojis.message} **Reason**
