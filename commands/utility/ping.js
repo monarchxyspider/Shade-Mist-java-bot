@@ -19,7 +19,7 @@ module.exports = {
                 iconURL: client.user.displayAvatarURL()
             })
             .setDescription(`
-${client.config.emojis.stats} ## __**Bot Statistics**__
+## ${client.config.emojis.stats}  __**Bot Statistics**__
 ${client.config.emojis.time} __**WebSocket**__
 > \`${client.ws.ping}ms\`
 ${client.config.emojis.gear} __**Bot Status**__
