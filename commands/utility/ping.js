@@ -7,7 +7,7 @@ const {
 
 module.exports = {
     name: "ping",
-    aliases: ["p"],
+    aliases: ["<@1481550443149529270>"],
     description: "Display bot latency.",
 
     async execute(client, message) {
