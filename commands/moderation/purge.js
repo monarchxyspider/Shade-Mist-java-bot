@@ -73,11 +73,11 @@ module.exports = {
                 })
                 .setDescription(`
 
-${client.config.emojis.place} **Channel**: ${message.channel}
-${client.config.emojis.moderator}**Moderator**: ${message.author}
+<:information:1487486402244382790> **Channel**: ${message.channel}
+<:red_staff:1484584155273625650>**Moderator**: ${message.author}
 ${client.config.emojis.fetch} **Messages Fetched**: \`${fetched.size}\`
 ${client.config.emojis.message} **Purge Request**: \`${amount}\`
-🔍 **Messages Identified**: \`${messages.length}\`
+<:mute:1488895692784275630> **Messages Identified**: \`${messages.length}\`
 <:trashcan:1531569722460471306> **Messages Purged**: \`${deleted.size}\`
 `)
                 .setFooter({
