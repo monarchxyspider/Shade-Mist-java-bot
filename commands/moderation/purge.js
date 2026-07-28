@@ -72,26 +72,18 @@ module.exports = {
                     iconURL: client.user.displayAvatarURL()
                 })
                 .setDescription(`
-🗑️ **Type**
-> ${type}
 
-${client.config.emojis.place} **Channel**
-> ${message.channel}
+${client.config.emojis.place} **Channel**: ${message.channel}
 
-${client.config.emojis.moderator} **Moderator**
-> ${message.author}
+${client.config.emojis.moderator}**Moderator**: ${message.author}
 
-${client.config.emojis.fetch} **Messages Fetched**
-> \`${fetched.size}\`
+${client.config.emojis.fetch} **Messages Fetched**: \`${fetched.size}\`
 
-${client.config.emojis.message} **Purge Request**
-> \`${amount}\`
+${client.config.emojis.message} **Purge Request**: \`${amount}\`
 
-🔍 **Messages Identified**
-> \`${messages.length}\`
+🔍 **Messages Identified**: \`${messages.length}\`
 
-${client.config.emojis.success} **Messages Purged**
-> \`${deleted.size}\`
+${client.config.emojis.success} **Messages Purged**: \`${deleted.size}\`
 `)
                 .setFooter({
                     text: `${client.config.botName} • Moderation`,
