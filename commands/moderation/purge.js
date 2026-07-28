@@ -74,16 +74,11 @@ module.exports = {
                 .setDescription(`
 
 ${client.config.emojis.place} **Channel**: ${message.channel}
-
 ${client.config.emojis.moderator}**Moderator**: ${message.author}
-
 ${client.config.emojis.fetch} **Messages Fetched**: \`${fetched.size}\`
-
 ${client.config.emojis.message} **Purge Request**: \`${amount}\`
-
 🔍 **Messages Identified**: \`${messages.length}\`
-
-${client.config.emojis.success} **Messages Purged**: \`${deleted.size}\`
+<:trashcan:1531569722460471306> **Messages Purged**: \`${deleted.size}\`
 `)
                 .setFooter({
                     text: `${client.config.botName} • Moderation`,
