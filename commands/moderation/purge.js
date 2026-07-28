@@ -73,9 +73,9 @@ module.exports = {
                 })
                 .setDescription(`
 
-<:information:1487486402244382790> **Channel**: ${message.channel}
-<:red_staff:1484584155273625650>**Moderator**: ${message.author}
-${client.config.emojis.fetch} **Messages Fetched**: \`${fetched.size}\`
+<:channel_mist:1488443060441448528> **Channel**: ${message.channel}
+<:sword:1486605962809704520>**Moderator**: ${message.author}
+<:Chat:1484156192652525618> **Messages Fetched**: \`${fetched.size}\`
 ${client.config.emojis.message} **Purge Request**: \`${amount}\`
 <:mute:1488895692784275630> **Messages Identified**: \`${messages.length}\`
 <:trashcan:1531569722460471306> **Messages Purged**: \`${deleted.size}\`
