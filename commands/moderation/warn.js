@@ -79,7 +79,7 @@ async execute(client, message, args) {
                         {  
                             type: 10,  
                             content: `<:information:1487486402244382790> **Reason:** ${reason}\n<:red_staff:1484584155273625650> **Moderator:** ${message.author.tag}`
-`  
+ 
                         },  
                         {  
                             type: 14  
