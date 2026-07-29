@@ -26,8 +26,8 @@ module.exports = {
                             type: 10,
                             content: `Your all-in-one server Domain.
 
-🔒 [Privacy Policy](https://monarchxyspider.github.io/Shademist-docs/privacy.html)
-📜 [Terms of Service](https://monarchxyspider.github.io/Shademist-docs/terms.html)`
+<:Star_monarchs:1494580479821615196> [Privacy Policy](https://monarchxyspider.github.io/Shademist-docs/privacy.html)
+<:kinights_poll:1487074927671644211> [Terms of Service](https://monarchxyspider.github.io/Shademist-docs/terms.html)`
                         },
                         {
                             type: 14
