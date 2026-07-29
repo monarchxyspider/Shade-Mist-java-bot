@@ -24,7 +24,10 @@ module.exports = {
                         },
                         {
                             type: 10,
-                            content: `Your all-in-one server Domain.`
+                            content: `Your all-in-one server Domain.
+
+🔒 [Privacy Policy](https://monarchxyspider.github.io/Shademist-docs/privacy.html)
+📜 [Terms of Service](https://monarchxyspider.github.io/Shademist-docs/terms.html)`
                         },
                         {
                             type: 14
@@ -61,7 +64,7 @@ module.exports = {
                                     style: 5,
                                     label: "Add Bot",
                                     emoji: {
-                                        name: "➕"
+                                        name: "<:adds:1486921444045885490> "
                                     },
                                     url: "https://discord.com/oauth2/authorize?client_id=1481550443149529270&permissions=8&integration_type=0&scope=bot+applications.commands"
                                 }
