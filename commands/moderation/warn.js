@@ -71,15 +71,15 @@ async execute(client, message, args) {
                     components: [  
                         {  
                             type: 10,  
-                            content: <:alert:1480938100401111091> **You have been warned in ${message.guild.name}**  
+                            content: `<:alert:1480938100401111091> **You have been warned in ${message.guild.name}**`  
                         },  
                         {  
                             type: 14  
                         },  
                         {  
                             type: 10,  
-                            content: `<:information:1487486402244382790> **Reason:** ${reason}\n
-<:red_staff:1484584155273625650> **Moderator:** ${message.author.tag}`  
+                            content: `<:information:1487486402244382790> **Reason:** ${reason}\n<:red_staff:1484584155273625650> **Moderator:** ${message.author.tag}`
+`  
                         },  
                         {  
                             type: 14  
