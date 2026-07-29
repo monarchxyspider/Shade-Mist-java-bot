@@ -64,8 +64,9 @@ module.exports = {
                                     style: 5,
                                     label: "Add Bot",
                                     emoji: {
-                                        name: "<:adds:1486921444045885490> "
-                                    },
+    id: "1486921444045885490",
+    name: "adds"
+},
                                     url: "https://discord.com/oauth2/authorize?client_id=1481550443149529270&permissions=8&integration_type=0&scope=bot+applications.commands"
                                 }
                             ]
