@@ -6,7 +6,7 @@ module.exports = {
 
     embedColor: "#E53935",
 
-    supportServer: "https://discord.gg/54vJcse3",
+    supportServer: "https://discord.gg/uW34DMUu8",
 
     developers: [
         "1445544845002276944"
