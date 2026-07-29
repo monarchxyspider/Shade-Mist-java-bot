@@ -24,7 +24,7 @@ module.exports = {
             components: [
                 {
                     type: 17,
-                    accent_color: 0x5865F2,
+                    accent_color: 0xE53935,
                     components: [
                         {
                             type: 10,
@@ -32,7 +32,7 @@ module.exports = {
                         },
                         {
                             type: 10,
-                            content: `Your all-in-one server companion.`
+                            content: `Your all-in-one server Domain.`
                         },
                         { type: 14 },
                         {
@@ -41,8 +41,8 @@ module.exports = {
                                 `**Prefix:** \`s!\``,
                                 `**Help:** \`s!help\``,
                                 `**Server:** \`${message.guild.name}\``,
-                                `**Status:** 🟢 Operational`,
-                                `${client.config.emojis.time} **Ping:** \`${client.ws.ping}ms\``,
+                                `**Status:** <:upgrade:1494364520850784348> `,
+                                `$<:ping:1494366308601561310> **Ping:** \`${client.ws.ping}ms\``,
                                 `${client.config.emojis.member} **Users:** \`${client.users.cache.size}\``
                             ].join("\n")
                         },
