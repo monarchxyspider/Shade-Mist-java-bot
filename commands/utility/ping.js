@@ -39,8 +39,7 @@ module.exports = {
                                 `<:ping:1494366308601561310> **Ping:** \`${client.ws.ping}ms\``,
                                 `${client.config.emojis.member} **Users:** \`${client.users.cache.size}\``,
                                 ``,
-                                `<:Star_monarchs:1494580479821615196> [Privacy Policy](https://monarchxyspider.github.io/Shademist-docs/privacy.html)`,
-                                `<:kinights_poll:1487074927671644211> [Terms of Service](https://monarchxyspider.github.io/Shademist-docs/terms.html)`
+                                 `**[Privacy](https://monarchxyspider.github.io/Shademist-docs/privacy.html)**`,        `**•[Terms](https://monarchxyspider.github.io/Shademist-docs/terms.html)**`
                             ].join("\n")
                         },
                         {
