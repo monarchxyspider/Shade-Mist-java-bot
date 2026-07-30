@@ -33,7 +33,7 @@ module.exports = {
                             type: 10,
                             content: [
                                 `**Prefix:** \`s!\``,
-                                `**Help:** \`s!\`help`,
+                                `**Help:** \`s!help\``,
                                 `**Server:** \`${message.guild.name}\``,
                                 `**Status:** <a:StatusOnline:1532272232280231956>`,
                                 `<:ping:1494366308601561310> **Ping:** \`${client.ws.ping}ms\``,
