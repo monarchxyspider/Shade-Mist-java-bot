@@ -53,8 +53,8 @@ module.exports = {
                                     style: 5,
                                     label: "Support Server",
                                     emoji: {
-                                        id: "1494365866916053022",
-                                        name: "list"
+                                        id: "1532268163524333673",
+                                        name: "NeonRedSlashcommands"
                                     },
                                     url: "https://discord.gg/uW34DMUu8"
                                 },
@@ -63,8 +63,8 @@ module.exports = {
                                     style: 5,
                                     label: "Add Bot",
                                     emoji: {
-                                        id: "1486921444045885490",
-                                        name: "adds"
+                                        id: "1532250336155402443",
+                                        name: "emojigg_add"
                                     },
                                     url: "https://discord.com/oauth2/authorize?client_id=1481550443149529270&permissions=8&integration_type=0&scope=bot+applications.commands"
                                 }
