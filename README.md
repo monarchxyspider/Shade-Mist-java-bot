@@ -1,2 +1,2 @@
-# Shade-Mist-Bot
+# Shade-Mist-java-Bot
 A ultimate bot with everything
