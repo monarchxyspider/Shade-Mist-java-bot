@@ -24,10 +24,7 @@ module.exports = {
                         },
                         {
                             type: 10,
-                            content: `Your all-in-one server Domain.
-
-<:Star_monarchs:1494580479821615196> [Privacy Policy](https://monarchxyspider.github.io/Shademist-docs/privacy.html)
-<:kinights_poll:1487074927671644211> [Terms of Service](https://monarchxyspider.github.io/Shademist-docs/terms.html)`
+                            content: `Your all-in-one server Domain.`
                         },
                         {
                             type: 14
@@ -40,7 +37,10 @@ module.exports = {
                                 `**Server:** \`${message.guild.name}\``,
                                 `**Status:** <:upgrade:1494364520850784348>`,
                                 `<:ping:1494366308601561310> **Ping:** \`${client.ws.ping}ms\``,
-                                `${client.config.emojis.member} **Users:** \`${client.users.cache.size}\``
+                                `${client.config.emojis.member} **Users:** \`${client.users.cache.size}\``,
+                                ``,
+                                `<:Star_monarchs:1494580479821615196> [Privacy Policy](https://monarchxyspider.github.io/Shademist-docs/privacy.html)`,
+                                `<:kinights_poll:1487074927671644211> [Terms of Service](https://monarchxyspider.github.io/Shademist-docs/terms.html)`
                             ].join("\n")
                         },
                         {
@@ -64,9 +64,9 @@ module.exports = {
                                     style: 5,
                                     label: "Add Bot",
                                     emoji: {
-    id: "1486921444045885490",
-    name: "adds"
-},
+                                        id: "1486921444045885490",
+                                        name: "adds"
+                                    },
                                     url: "https://discord.com/oauth2/authorize?client_id=1481550443149529270&permissions=8&integration_type=0&scope=bot+applications.commands"
                                 }
                             ]
