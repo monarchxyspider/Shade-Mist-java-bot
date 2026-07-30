@@ -33,12 +33,13 @@ module.exports = {
                             type: 10,
                             content: [
                                 `**Prefix:** \`s!\``,
-                                `**Help:** \`s!help\``,
+                                `**Help:** \`s!\`help`,
                                 `**Server:** \`${message.guild.name}\``,
                                 `**Status:** <:upgrade:1494364520850784348>`,
                                 `<:ping:1494366308601561310> **Ping:** \`${client.ws.ping}ms\``,
                                 `${client.config.emojis.member} **Users:** \`${client.users.cache.size}\``,
-                                    `**[Privacy](https://monarchxyspider.github.io/Shademist-docs/privacy.html)**``**•[Terms](https://monarchxyspider.github.io/Shademist-docs/terms.html)**`
+                                ``,
+                                `[Privacy](https://monarchxyspider.github.io/Shademist-docs/privacy.html) • [Terms](https://monarchxyspider.github.io/Shademist-docs/terms.html)`
                             ].join("\n")
                         },
                         {
