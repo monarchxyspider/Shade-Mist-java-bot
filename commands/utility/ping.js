@@ -39,7 +39,7 @@ module.exports = {
                                 `<:ping:1494366308601561310> **Ping:** \`${client.ws.ping}ms\``,
                                 `${client.config.emojis.member} **Users:** \`${client.users.cache.size}\``,
                                 ``,
-                                `[Privacy](https://monarchxyspider.github.io/Shademist-docs/privacy.html) • [Terms](https://monarchxyspider.github.io/Shademist-docs/terms.html)`
+                                `**[Privacy](https://monarchxyspider.github.io/Shademist-docs/privacy.html) • [Terms](https://monarchxyspider.github.io/Shademist-docs/terms.html)**`
                             ].join("\n")
                         },
                         {
@@ -53,8 +53,8 @@ module.exports = {
                                     style: 5,
                                     label: "Support Server",
                                     emoji: {
-                                        id: "1532268163524333673",
-                                        name: "NeonRedSlashcommands"
+                                        id: "1487485966544277514",
+                                        name: "Book"
                                     },
                                     url: "https://discord.gg/uW34DMUu8"
                                 },
@@ -63,8 +63,8 @@ module.exports = {
                                     style: 5,
                                     label: "Add Bot",
                                     emoji: {
-                                        id: "1532250336155402443",
-                                        name: "emojigg_add"
+                                        id: "1532271131380158504",
+                                        name: "AddcircleLogo"
                                     },
                                     url: "https://discord.com/oauth2/authorize?client_id=1481550443149529270&permissions=8&integration_type=0&scope=bot+applications.commands"
                                 }
