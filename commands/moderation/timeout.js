@@ -63,12 +63,10 @@ module.exports = {
                 })
                 .setDescription(`
 ${client.config.emojis.error} **Action Denied**
-
 ${client.config.emojis.user} **Target**
-> ${member.user.tag}
-
+ ${member.user.tag}
 ${client.config.emojis.message} **Reason**
-> This member has the **Moderate Members** permission.
+ This member has the **Moderate Members** permission.
 `)
                 .setFooter({
                     text: client.config.botName,
@@ -157,12 +155,10 @@ ${client.config.emojis.message} **Reason**
             .setDescription(`
 ${client.config.emojis.user} **Target**
 > ${member.user.tag} (\`${member.id}\`)
-
 ${client.config.emojis.time} **Duration**
-> ${durationInput}
-
+ ${durationInput}
 ${client.config.emojis.message} **Reason**
-> ${reason}
+ ${reason}
 `)
             .setFooter({
                 text: "Press Confirm to timeout this member.",
@@ -277,13 +273,11 @@ ${client.config.emojis.user} **User**
 > ${member.user.tag} (\`${member.id}\`)
 
 ${client.config.emojis.moderator} **Moderator**
-> ${message.author.tag}
-
+ ${message.author.tag}
 ${client.config.emojis.time} **Duration**
-> ${durationInput}
-
+ ${durationInput}
 ${client.config.emojis.message} **Reason**
-> ${reason}
+ ${reason}
 `)
                     .setFooter({
                         text: client.config.botName,
