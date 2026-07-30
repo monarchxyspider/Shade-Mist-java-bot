@@ -35,7 +35,7 @@ module.exports = {
                                 `**Prefix:** \`s!\``,
                                 `**Help:** \`s!\`help`,
                                 `**Server:** \`${message.guild.name}\``,
-                                `**Status:** <:upgrade:1494364520850784348>`,
+                                `**Status:** <a:StatusOnline:1532272232280231956>`,
                                 `<:ping:1494366308601561310> **Ping:** \`${client.ws.ping}ms\``,
                                 `${client.config.emojis.member} **Users:** \`${client.users.cache.size}\``,
                                 ``,
