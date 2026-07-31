@@ -1,4 +1,4 @@
-const {
+8const {
     EmbedBuilder,
     PermissionFlagsBits,
     ActionRowBuilder,
@@ -169,16 +169,16 @@ ${reason}
         const row = new ActionRowBuilder()
 .addComponents(
     new ButtonBuilder()
-        .setCustomId("timeout_confirm")
-        .setLabel("Confirm")
-        .setEmoji("1484536303281242164") // Confirm emoji ID
-        .setStyle(ButtonStyle.Succes),
+    .setCustomId("timeout_confirm")
+    .setLabel("Confirm")
+    .setEmoji("1484536303281242164")
+    .setStyle(ButtonStyle.Success),
 
     new ButtonBuilder()
-        .setCustomId("timeout_cancel")
-        .setLabel("Cancel")
-        .setEmoji("1482677821674360902") // Cancel emoji ID
-        .setStyle(ButtonStyle.Danger)
+    .setCustomId("timeout_cancel")
+    .setLabel("Cancel")
+    .setEmoji("1482677821674360902")
+    .setStyle(ButtonStyle.Danger)
 );
 
         const confirmMessage = await message.reply({
