@@ -64,9 +64,9 @@ module.exports = {
                 .setDescription(`
 ${client.config.emojis.error} **Action Denied**
 ${client.config.emojis.user} **Target**
- ${member.user.tag}
+${member.user.tag}
 ${client.config.emojis.message} **Reason**
- This member has the **Moderate Members** permission.
+This member has the **Moderate Members** permission.
 `)
                 .setFooter({
                     text: client.config.botName,
