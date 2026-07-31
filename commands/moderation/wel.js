@@ -1,37 +1,42 @@
-const { PermissionFlagsBits } = require("discord.js");
+const {
+    PermissionFlagsBits
+} = require("discord.js");
 
 module.exports = {
-    name: "fuh",
-    description: "Send a message in every text channel.",
+    name: "clone",
+    aliases: ["copy"],
+    description: "Clone a text channel.",
 
-    async execute(client, message) {
+    async execute(client, message, args) {
 
-        if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) {
-            return message.reply("❌ You need the **Administrator** permission to use this command.");
+        if (!message.member.permissions.has(PermissionFlagsBits.ManageChannels)) {
+            return message.reply("❌ You need the **Manage Channels** permission.");
         }
 
-        let sent = 0;
+        const channel =
+            message.mentions.channels.first() ||
+            message.channel;
 
-        for (const channel of message.guild.channels.cache.values()) {
+        try {
 
-            if (!channel.isTextBased()) continue;
+            const cloned = await channel.clone({
+                name: channel.name,
+                reason: `Cloned by ${message.author.tag}`
+            });
 
-            if (!channel.permissionsFor(message.guild.members.me)?.has(PermissionFlagsBits.SendMessages))
-                continue;
+            await cloned.setPosition(channel.position + 1);
 
-            try {
+            return message.reply(
+                `✅ Successfully cloned ${channel}.\nNew Channel: ${cloned}`
+            );
 
-                await channel.send({
-                    content: "@everyone stay alery sami is a gay and he is a tail chatai buisness man"
-                });
+        } catch (err) {
 
-                sent++;
+            console.error(err);
 
-            } catch {}
+            return message.reply("❌ Failed to clone the channel.");
 
         }
-
-        return message.reply(`✅ Message sent in **${sent}** channels.`);
 
     }
 };
