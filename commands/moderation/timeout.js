@@ -172,7 +172,7 @@ ${reason}
         .setCustomId("timeout_confirm")
         .setLabel("Confirm")
         .setEmoji("1484536303281242164") // Confirm emoji ID
-        .setStyle(ButtonStyle.succes),
+        .setStyle(ButtonStyle.Succes),
 
     new ButtonBuilder()
         .setCustomId("timeout_cancel")
