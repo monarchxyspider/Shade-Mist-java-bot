@@ -154,11 +154,11 @@ ${client.config.emojis.message} **Reason**
             })
             .setDescription(`
 ${client.config.emojis.user} **Target**
-> ${member.user.tag} (\`${member.id}\`)
+${member.user.tag} (\`${member.id}\`)
 ${client.config.emojis.time} **Duration**
- ${durationInput}
+${durationInput}
 ${client.config.emojis.message} **Reason**
- ${reason}
+${reason}
 `)
             .setFooter({
                 text: "Press Confirm to timeout this member.",
