@@ -172,13 +172,13 @@ ${reason}
         .setCustomId("timeout_confirm")
         .setLabel("Confirm")
         .setEmoji("1482677944399958150") // Confirm emoji ID
-        .setStyle(ButtonStyle.Danger),
+        .setStyle(ButtonStyle.succes),
 
     new ButtonBuilder()
         .setCustomId("timeout_cancel")
         .setLabel("Cancel")
         .setEmoji("1482677821674360902") // Cancel emoji ID
-        .setStyle(ButtonStyle.Secondary)
+        .setStyle(ButtonStyle.Danger)
 );
 
         const confirmMessage = await message.reply({
