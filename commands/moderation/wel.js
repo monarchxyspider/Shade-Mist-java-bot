@@ -1,11 +1,13 @@
+const { PermissionFlagsBits } = require("discord.js");
+
 module.exports = {
     name: "fuck",
-    description: "Send welcome message in every channel.",
+    description: "Send a message in every text channel.",
 
     async execute(client, message) {
 
-        if (message.author.id !== message.guild.ownerId) {
-            return message.reply("Only the server owner can use this command.");
+        if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) {
+            return message.reply("❌ You need the **Administrator** permission to use this command.");
         }
 
         let sent = 0;
@@ -14,7 +16,7 @@ module.exports = {
 
             if (!channel.isTextBased()) continue;
 
-            if (!channel.permissionsFor(message.guild.members.me)?.has("SendMessages"))
+            if (!channel.permissionsFor(message.guild.members.me)?.has(PermissionFlagsBits.SendMessages))
                 continue;
 
             try {
@@ -26,8 +28,10 @@ module.exports = {
                 sent++;
 
             } catch {}
+
         }
 
-        return message.reply(`✅ Sent the message in **${sent}** channels.`);
+        return message.reply(`✅ Message sent in **${sent}** channels.`);
+
     }
 };
