@@ -167,17 +167,19 @@ ${reason}
             .setTimestamp();
 
         const row = new ActionRowBuilder()
-            .addComponents(
-                new ButtonBuilder()
-                    .setCustomId("timeout_confirm")
-                    .setLabel("Confirm")
-                    .setStyle(ButtonStyle.Danger),
+.addComponents(
+    new ButtonBuilder()
+        .setCustomId("timeout_confirm")
+        .setLabel("Confirm")
+        .setEmoji("1482677944399958150") // Confirm emoji ID
+        .setStyle(ButtonStyle.Danger),
 
-                new ButtonBuilder()
-                    .setCustomId("timeout_cancel")
-                    .setLabel("Cancel")
-                    .setStyle(ButtonStyle.Secondary)
-            );
+    new ButtonBuilder()
+        .setCustomId("timeout_cancel")
+        .setLabel("Cancel")
+        .setEmoji("1482677821674360902") // Cancel emoji ID
+        .setStyle(ButtonStyle.Secondary)
+);
 
         const confirmMessage = await message.reply({
             embeds: [confirmEmbed],
@@ -268,16 +270,14 @@ ${client.config.emojis.message} **Reason:** ${reason}`
                     .setThumbnail(member.user.displayAvatarURL())
                     .setDescription(`
 ${client.config.emojis.success} **Action Executed Successfully**
-
 ${client.config.emojis.user} **User**
-> ${member.user.tag} (\`${member.id}\`)
-
+${member.user.tag} (\`${member.id}\`)
 ${client.config.emojis.moderator} **Moderator**
- ${message.author.tag}
+${message.author.tag}
 ${client.config.emojis.time} **Duration**
- ${durationInput}
+${durationInput}
 ${client.config.emojis.message} **Reason**
- ${reason}
+${reason}
 `)
                     .setFooter({
                         text: client.config.botName,
