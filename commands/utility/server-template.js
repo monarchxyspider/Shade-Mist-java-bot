@@ -1,12 +1,14 @@
 const {
     EmbedBuilder,
-    PermissionFlagsBits
+    PermissionFlagsBits,
+    ChannelType
 } = require("discord.js");
+const crypto = require("crypto");
 
 module.exports = {
     name: "server-template",
     aliases: ["servertemplate"],
-    description: "Create or update the Discord server template.",
+    description: "Create a custom server backup template.",
 
     async execute(client, message) {
 
@@ -22,22 +24,19 @@ module.exports = {
         }
 
         const guild = message.guild;
-        const member = message.member;
-        const botMember = guild.members.me;
 
         // ==================================================
         // USER PERMISSION
         // ==================================================
 
         if (
-            !member ||
-            !member.permissions.has(
-                PermissionFlagsBits.ManageGuild
+            !message.member.permissions.has(
+                PermissionFlagsBits.Administrator
             )
         ) {
             return message.reply({
                 content:
-                    `${client.config.emojis.error} You need the **Manage Server** permission to use this command.`
+                    `${client.config.emojis.error} You need **Administrator** permission to create a server template.`
             });
         }
 
@@ -45,71 +44,152 @@ module.exports = {
         // BOT PERMISSION
         // ==================================================
 
+        const botMember = guild.members.me;
+
         if (
             !botMember ||
             !botMember.permissions.has(
-                PermissionFlagsBits.ManageGuild
+                PermissionFlagsBits.Administrator
             )
         ) {
             return message.reply({
                 content:
-                    `${client.config.emojis.error} I need the **Manage Server** permission to manage the server template.`
+                    `${client.config.emojis.error} I need **Administrator** permission to create a server template.`
             });
         }
 
         // ==================================================
-        // GET EXISTING TEMPLATE
+        // INITIALIZE TEMPLATE STORAGE
         // ==================================================
+
+        if (!client.templates) {
+            client.templates = new Map();
+        }
 
         try {
 
-            const templates =
-                await guild.fetchTemplates();
+            // ==================================================
+            // GENERATE TEMPLATE CODE
+            // ==================================================
 
-            let template;
+            const code = crypto
+                .randomBytes(6)
+                .toString("hex")
+                .toUpperCase();
 
-            // Server can only have one template
-            if (templates.size > 0) {
+            // ==================================================
+            // COLLECT ROLES
+            // ==================================================
 
-                template = templates.first();
+            const roles = guild.roles.cache
+                .filter(role => !role.managed)
+                .sort((a, b) => a.position - b.position)
+                .map(role => ({
+                    id: role.id,
+                    name: role.name,
+                    color: role.color,
+                    hoist: role.hoist,
+                    mentionable: role.mentionable,
+                    permissions: role.permissions.bitfield.toString(),
+                    position: role.position
+                }));
 
-                // ==================================================
-                // UPDATE EXISTING TEMPLATE
-                // ==================================================
+            // ==================================================
+            // COLLECT CHANNELS
+            // ==================================================
 
-                try {
+            const channels = guild.channels.cache
+                .sort((a, b) => a.rawPosition - b.rawPosition)
+                .map(channel => ({
 
-                    template = await template.edit({
-                        name: `${guild.name} Template`,
-                        description:
-                            `Official server template for ${guild.name}.`
-                    });
+                    id: channel.id,
 
-                } catch (error) {
+                    name: channel.name,
 
-                    console.error(
-                        "Template Update Error:",
-                        error
-                    );
+                    type: channel.type,
 
-                    return message.reply({
-                        content:
-                            `${client.config.emojis.error} **Failed to update the existing server template.**\n\n` +
-                            `**Discord Error:** \`${error.message || "Unknown error"}\``
-                    });
-                }
+                    position: channel.rawPosition,
 
-            } else {
+                    parentId: channel.parentId || null,
 
-                // ==================================================
-                // CREATE NEW TEMPLATE
-                // ==================================================
+                    topic:
+                        "topic" in channel
+                            ? channel.topic
+                            : null,
 
-                template = await guild.createTemplate(
+                    nsfw:
+                        "nsfw" in channel
+                            ? channel.nsfw
+                            : false,
+
+                    rateLimitPerUser:
+                        "rateLimitPerUser" in channel
+                            ? channel.rateLimitPerUser
+                            : 0,
+
+                    bitrate:
+                        "bitrate" in channel
+                            ? channel.bitrate
+                            : null,
+
+                    userLimit:
+                        "userLimit" in channel
+                            ? channel.userLimit
+                            : 0,
+
+                    permissionOverwrites:
+                        channel.permissionOverwrites.cache.map(
+                            overwrite => ({
+                                id: overwrite.id,
+
+                                type: overwrite.type,
+
+                                allow:
+                                    overwrite.allow.bitfield.toString(),
+
+                                deny:
+                                    overwrite.deny.bitfield.toString()
+                            })
+                        )
+                }));
+
+            // ==================================================
+            // SERVER DATA
+            // ==================================================
+
+            const template = {
+
+                name:
                     `${guild.name} Template`,
-                    `Official server template for ${guild.name}.`
-                );
-            }
+
+                sourceGuild:
+                    guild.id,
+
+                sourceGuildName:
+                    guild.name,
+
+                createdBy:
+                    message.author.id,
+
+                createdAt:
+                    Date.now(),
+
+                everyoneRoleId:
+                    guild.id,
+
+                roles,
+
+                channels
+            };
+
+            // ==================================================
+            // SAVE TEMPLATE
+            // ==================================================
+
+            client.templates.set(
+                code,
+                template
+            );
 
             // ==================================================
             // SUCCESS EMBED
@@ -117,33 +197,40 @@ module.exports = {
 
             const embed = new EmbedBuilder()
                 .setColor(client.config.embedColor)
+
                 .setAuthor({
                     name:
                         `${client.config.botName} • Server Template`,
                     iconURL:
                         client.user.displayAvatarURL()
                 })
+
                 .setDescription(
-                    `${client.config.emojis.success} **Server Template Ready**\n\n` +
+                    `${client.config.emojis.success} **Server Template Created**\n\n` +
 
                     `${client.config.emojis.server} **Server**\n` +
                     `> ${guild.name}\n\n` +
 
                     `${client.config.emojis.message} **Template Code**\n` +
-                    `> \`${template.code}\`\n\n` +
+                    `> \`${code}\`\n\n` +
 
-                    `${client.config.emojis.info} **Template Link**\n` +
-                    `> ${template.url}\n\n` +
+                    `${client.config.emojis.role || "🎭"} **Roles**\n` +
+                    `> ${roles.length}\n\n` +
 
-                    `${client.config.emojis.success} **Status**\n` +
-                    `> ${templates.size > 0 ? "Updated existing template" : "Created new template"}`
+                    `${client.config.emojis.channel || "📁"} **Channels**\n` +
+                    `> ${channels.length}\n\n` +
+
+                    `${client.config.emojis.info} **Restore**\n` +
+                    `> \`s!template ${code}\``
                 )
+
                 .setFooter({
                     text:
-                        `${client.config.botName} • Server Template`,
+                        `${client.config.botName} • Custom Template`,
                     iconURL:
                         client.user.displayAvatarURL()
                 })
+
                 .setTimestamp();
 
             return message.reply({
@@ -153,69 +240,18 @@ module.exports = {
         } catch (error) {
 
             // ==================================================
-            // ERROR LOG
+            // ERROR
             // ==================================================
 
             console.error(
-                "========================================"
-            );
-
-            console.error(
-                "SERVER TEMPLATE ERROR"
-            );
-
-            console.error(
-                "Error Code:",
-                error.code
-            );
-
-            console.error(
-                "HTTP Status:",
-                error.status
-            );
-
-            console.error(
-                "Error Message:",
-                error.message
-            );
-
-            console.error(
-                "Full Error:",
+                "Server Template Error:",
                 error
             );
 
-            console.error(
-                "========================================"
-            );
-
-            // ==================================================
-            // ERROR RESPONSE
-            // ==================================================
-
             return message.reply({
-                embeds: [
-                    new EmbedBuilder()
-                        .setColor(0xED4245)
-                        .setAuthor({
-                            name:
-                                `${client.config.botName} • Template Error`,
-                            iconURL:
-                                client.user.displayAvatarURL()
-                        })
-                        .setDescription(
-                            `${client.config.emojis.error} **Failed to create/update the server template.**\n\n` +
-
-                            `${client.config.emojis.info} **Reason**\n` +
-                            `> ${error.message || "Unknown Discord error."}\n\n` +
-
-                            `**Error Code:** \`${error.code || "Unknown"}\``
-                        )
-                        .setFooter({
-                            text:
-                                `${client.config.botName} • Discord API`
-                        })
-                        .setTimestamp()
-                ]
+                content:
+                    `${client.config.emojis.error} **Failed to create the server template.**\n\n` +
+                    `\`\`\`${error.message || "Unknown error"}\`\`\``
             });
         }
     }
