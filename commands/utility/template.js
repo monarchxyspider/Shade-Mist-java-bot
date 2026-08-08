@@ -287,4 +287,326 @@ module.exports = {
             const templateRoles = (serialized.roles || [])
                 .filter(role => role.id !== serialized.id)
                 .filter(role => !role.managed)
-                .sort((a, b) => a
+                .sort((a, b) => a.position - b.position);
+
+            for (const roleData of templateRoles) {
+                try {
+                    const newRole = await guild.roles.create({
+                        name: roleData.name || "New Role",
+                        color: roleData.color || 0,
+                        hoist: roleData.hoist || false,
+                        mentionable: roleData.mentionable || false,
+                        permissions: roleData.permissions || "0",
+                        reason: "Discord template restore"
+                    });
+
+                    roleMap.set(roleData.id, newRole.id);
+                } catch (error) {
+                    console.log(
+                        `Could not create role ${roleData.name}:`,
+                        error.message
+                    );
+                }
+            }
+
+            // --------------------------------------------------
+            // FIX ROLE POSITIONS
+            // --------------------------------------------------
+
+            const rolePositions = [];
+
+            for (const roleData of templateRoles) {
+                const newRoleId = roleMap.get(roleData.id);
+
+                if (!newRoleId) continue;
+
+                rolePositions.push({
+                    role: newRoleId,
+                    position: roleData.position || 1
+                });
+            }
+
+            if (rolePositions.length) {
+                try {
+                    await guild.roles.setPositions({
+                        positions: rolePositions
+                    });
+                } catch (error) {
+                    console.log(
+                        "Could not set role positions:",
+                        error.message
+                    );
+                }
+            }
+
+            // --------------------------------------------------
+            // CREATE CATEGORIES FIRST
+            // --------------------------------------------------
+
+            await status.edit({
+                embeds: [
+                    new EmbedBuilder()
+                        .setColor(client.config.embedColor)
+                        .setDescription(
+                            `${client.config.emojis.loading || "⏳"} **Creating categories...**`
+                        )
+                ]
+            });
+
+            const channelMap = new Map();
+
+            const templateChannels = serialized.channels || [];
+
+            const categories = templateChannels
+                .filter(channel =>
+                    channel.type === ChannelType.GuildCategory ||
+                    channel.type === 4
+                )
+                .sort((a, b) => a.position - b.position);
+
+            for (const category of categories) {
+                try {
+                    const newCategory = await guild.channels.create({
+                        name: category.name || "Category",
+                        type: ChannelType.GuildCategory,
+                        position: category.position || 0,
+                        permissionOverwrites: buildPermissionOverwrites(
+                            category.permission_overwrites,
+                            roleMap,
+                            guild
+                        ),
+                        reason: "Discord template restore"
+                    });
+
+                    channelMap.set(category.id, newCategory.id);
+                } catch (error) {
+                    console.log(
+                        `Could not create category ${category.name}:`,
+                        error.message
+                    );
+                }
+            }
+
+            // --------------------------------------------------
+            // CREATE NORMAL CHANNELS
+            // --------------------------------------------------
+
+            await status.edit({
+                embeds: [
+                    new EmbedBuilder()
+                        .setColor(client.config.embedColor)
+                        .setDescription(
+                            `${client.config.emojis.loading || "⏳"} **Creating channels...**`
+                        )
+                ]
+            });
+
+            const normalChannels = templateChannels
+                .filter(channel =>
+                    channel.type !== ChannelType.GuildCategory &&
+                    channel.type !== 4
+                )
+                .sort((a, b) => a.position - b.position);
+
+            for (const channelData of normalChannels) {
+                try {
+                    let type = channelData.type;
+
+                    // Valid Discord channel types
+                    if (
+                        ![
+                            ChannelType.GuildText,
+                            ChannelType.GuildVoice,
+                            ChannelType.GuildAnnouncement,
+                            ChannelType.GuildStageVoice,
+                            ChannelType.GuildForum,
+                            ChannelType.GuildMedia
+                        ].includes(type)
+                    ) {
+                        type = ChannelType.GuildText;
+                    }
+
+                    const options = {
+                        name: channelData.name || "channel",
+                        type,
+                        position: channelData.position || 0,
+                        reason: "Discord template restore"
+                    };
+
+                    // Category
+                    if (channelData.parent_id) {
+                        const parentId = channelMap.get(
+                            channelData.parent_id
+                        );
+
+                        if (parentId) {
+                            options.parent = parentId;
+                        }
+                    }
+
+                    // Text channel
+                    if (
+                        type === ChannelType.GuildText ||
+                        type === ChannelType.GuildAnnouncement
+                    ) {
+                        if (channelData.topic) {
+                            options.topic = channelData.topic;
+                        }
+
+                        if (channelData.nsfw !== undefined) {
+                            options.nsfw = channelData.nsfw;
+                        }
+
+                        if (channelData.rate_limit_per_user !== undefined) {
+                            options.rateLimitPerUser =
+                                channelData.rate_limit_per_user;
+                        }
+                    }
+
+                    // Voice channel
+                    if (
+                        type === ChannelType.GuildVoice ||
+                        type === ChannelType.GuildStageVoice
+                    ) {
+                        if (channelData.bitrate) {
+                            options.bitrate = Math.min(
+                                channelData.bitrate,
+                                guild.maximumBitrate
+                            );
+                        }
+
+                        if (channelData.user_limit !== undefined) {
+                            options.userLimit =
+                                channelData.user_limit;
+                        }
+                    }
+
+                    // Permission overwrites
+                    const overwrites =
+                        buildPermissionOverwrites(
+                            channelData.permission_overwrites,
+                            roleMap,
+                            guild
+                        );
+
+                    if (overwrites.length) {
+                        options.permissionOverwrites = overwrites;
+                    }
+
+                    const newChannel =
+                        await guild.channels.create(options);
+
+                    channelMap.set(
+                        channelData.id,
+                        newChannel.id
+                    );
+
+                } catch (error) {
+                    console.log(
+                        `Could not create channel ${channelData.name}:`,
+                        error.message
+                    );
+                }
+            }
+
+            // --------------------------------------------------
+            // FINISH
+            // --------------------------------------------------
+
+            await status.edit({
+                embeds: [
+                    new EmbedBuilder()
+                        .setColor(client.config.embedColor)
+                        .setAuthor({
+                            name: `${client.config.botName} • Template Restored`,
+                            iconURL: client.user.displayAvatarURL()
+                        })
+                        .setDescription(
+                            `${client.config.emojis.success} **Template successfully restored!**\n\n` +
+                            `${client.config.emojis.server} **Template:** ${template.name}\n` +
+                            `${client.config.emojis.role || "🎭"} **Roles:** ${roleMap.size - 1}\n` +
+                            `${client.config.emojis.channel || "📁"} **Channels:** ${channelMap.size}\n\n` +
+                            `The server structure has been recreated from the template.`
+                        )
+                        .setFooter({
+                            text: client.config.botName
+                        })
+                        .setTimestamp()
+                ]
+            });
+
+        } catch (error) {
+            console.error("Template restore error:", error);
+
+            return status.edit({
+                embeds: [
+                    new EmbedBuilder()
+                        .setColor(0xED4245)
+                        .setDescription(
+                            `${client.config.emojis.error} **Template restore failed.**\n\n` +
+                            `\`\`\`${error.message.slice(0, 1500)}\`\`\``
+                        )
+                        .setTimestamp()
+                ]
+            });
+        }
+    }
+};
+
+
+// ==========================================================
+// PERMISSION OVERWRITE BUILDER
+// ==========================================================
+
+function buildPermissionOverwrites(
+    overwrites,
+    roleMap,
+    guild
+) {
+    if (!Array.isArray(overwrites)) {
+        return [];
+    }
+
+    const result = [];
+
+    for (const overwrite of overwrites) {
+        let targetId;
+
+        // Role overwrite
+        if (overwrite.type === 0 || overwrite.type === "role") {
+            targetId = roleMap.get(overwrite.id);
+
+            if (!targetId) {
+                // @everyone
+                if (overwrite.id === guild.id) {
+                    targetId = guild.id;
+                } else {
+                    continue;
+                }
+            }
+        }
+
+        // Member overwrite
+        else if (
+            overwrite.type === 1 ||
+            overwrite.type === "member"
+        ) {
+            // Only restore users that are still in the server
+            const member = guild.members.cache.get(overwrite.id);
+
+            if (!member) continue;
+
+            targetId = overwrite.id;
+        }
+
+        if (!targetId) continue;
+
+        result.push({
+            id: targetId,
+            allow: BigInt(overwrite.allow || 0),
+            deny: BigInt(overwrite.deny || 0)
+        });
+    }
+
+    return result;
+}
