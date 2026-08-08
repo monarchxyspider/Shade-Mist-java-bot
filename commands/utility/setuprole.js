@@ -1,12 +1,15 @@
 const {
     EmbedBuilder,
-    PermissionFlagsBits
+    PermissionFlagsBits,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle
 } = require("discord.js");
 
 module.exports = {
     name: "setup-roles",
     aliases: ["rolesetup", "resetroles"],
-    description: "Delete existing roles and create the complete staff role hierarchy.",
+    description: "Reset and create the server role hierarchy.",
 
     async execute(client, message) {
 
@@ -57,356 +60,538 @@ module.exports = {
         }
 
         // ==================================================
-        // WARNING
+        // WARNING EMBED
         // ==================================================
 
-        const warning = await message.reply({
-            embeds: [
-                new EmbedBuilder()
-                    .setColor(0xED4245)
-                    .setAuthor({
-                        name: `${client.config.botName} • Role Setup`,
-                        iconURL: client.user.displayAvatarURL()
-                    })
-                    .setDescription(
-                        `${client.config.emojis.warning || "⚠️"} **Role Setup Warning**\n\n` +
-                        `This will delete **all existing custom roles** and create a new role hierarchy.\n\n` +
-                        `${client.config.emojis.error} Existing custom roles will be removed.\n` +
-                        `${client.config.emojis.info || "ℹ️"} Bot/managed roles cannot be deleted.\n\n` +
-                        `React with ✅ within **15 seconds** to continue.`
-                    )
-                    .setTimestamp()
-            ]
+        const warningEmbed = new EmbedBuilder()
+            .setColor(0xED4245)
+            .setAuthor({
+                name: `${client.config.botName} • Role Setup`,
+                iconURL: client.user.displayAvatarURL()
+            })
+            .setDescription(
+                `${client.config.emojis.warning || "⚠️"} **Role Setup Warning**\n\n` +
+
+                `This command will **delete all existing custom roles** and create a new role hierarchy.\n\n` +
+
+                `${client.config.emojis.error} Existing custom roles will be deleted.\n` +
+                `${client.config.emojis.info || "ℹ️"} Managed/bot roles cannot be deleted.\n` +
+                `${client.config.emojis.role || "🎭"} New roles will be **non-mentionable**.\n\n` +
+
+                `**Are you sure you want to continue?**`
+            )
+            .setFooter({
+                text: `${client.config.botName} • Only you can use these buttons`
+            })
+            .setTimestamp();
+
+        // ==================================================
+        // BUTTONS
+        // ==================================================
+
+        const row = new ActionRowBuilder().addComponents(
+
+            new ButtonBuilder()
+                .setCustomId(`setup_roles_confirm_${message.author.id}`)
+                .setLabel("Confirm")
+                .setEmoji("✅")
+                .setStyle(ButtonStyle.Danger),
+
+            new ButtonBuilder()
+                .setCustomId(`setup_roles_cancel_${message.author.id}`)
+                .setLabel("Cancel")
+                .setEmoji("❌")
+                .setStyle(ButtonStyle.Secondary)
+        );
+
+        // ==================================================
+        // SEND CONFIRMATION
+        // ==================================================
+
+        const confirmationMessage = await message.reply({
+            embeds: [warningEmbed],
+            components: [row]
         });
 
-        await warning.react("✅");
-
-        const filter = (reaction, user) =>
-            reaction.emoji.name === "✅" &&
-            user.id === message.author.id;
-
-        try {
-            await warning.awaitReactions({
-                filter,
-                max: 1,
-                time: 15000,
-                errors: ["time"]
-            });
-        } catch {
-            return warning.edit({
-                content:
-                    `${client.config.emojis.error} **Role setup cancelled.**`,
-                embeds: []
-            });
-        }
-
         // ==================================================
-        // START
+        // COLLECTOR
         // ==================================================
 
-        const status = await message.channel.send({
-            embeds: [
-                new EmbedBuilder()
-                    .setColor(client.config.embedColor)
-                    .setAuthor({
-                        name: `${client.config.botName} • Role Setup`,
-                        iconURL: client.user.displayAvatarURL()
-                    })
-                    .setDescription(
-                        `${client.config.emojis.loading || "⏳"} **Removing existing roles...**`
-                    )
-                    .setTimestamp()
-            ]
-        });
+        const collector =
+            confirmationMessage.createMessageComponentCollector({
+                filter: interaction =>
+                    interaction.user.id === message.author.id,
 
-        try {
+                time: 20000,
+                max: 1
+            });
+
+        // ==================================================
+        // BUTTON CLICK
+        // ==================================================
+
+        collector.on("collect", async interaction => {
 
             // ==================================================
-            // DELETE EXISTING CUSTOM ROLES
+            // CANCEL
             // ==================================================
 
-            const roles = [...guild.roles.cache.values()]
-                .filter(role => role.id !== guild.id)
-                .filter(role => !role.managed)
-                .sort((a, b) => b.position - a.position);
+            if (
+                interaction.customId ===
+                `setup_roles_cancel_${message.author.id}`
+            ) {
 
-            let deleted = 0;
-
-            for (const role of roles) {
-                try {
-                    await role.delete("Role hierarchy reset");
-                    deleted++;
-                } catch (error) {
-                    console.log(
-                        `Could not delete role ${role.name}:`,
-                        error.message
-                    );
-                }
+                return interaction.update({
+                    content:
+                        `${client.config.emojis.error} **Role setup cancelled.**`,
+                    embeds: [],
+                    components: []
+                });
             }
 
             // ==================================================
-            // ROLE DEFINITIONS
+            // CONFIRM
             // ==================================================
 
-            const roleData = [
+            if (
+                interaction.customId ===
+                `setup_roles_confirm_${message.author.id}`
+            ) {
 
-                // ================================
-                // TOP STAFF
-                // ================================
+                await interaction.update({
+                    embeds: [
+                        new EmbedBuilder()
+                            .setColor(client.config.embedColor)
+                            .setAuthor({
+                                name:
+                                    `${client.config.botName} • Role Setup`,
+                                iconURL:
+                                    client.user.displayAvatarURL()
+                            })
+                            .setDescription(
+                                `${client.config.emojis.loading || "⏳"} **Starting role setup...**`
+                            )
+                            .setTimestamp()
+                    ],
+                    components: []
+                });
 
-                {
-                    name: "「Owner」",
-                    color: 0xE74C3C
-                },
+                await setupRoles(
+                    client,
+                    guild,
+                    interaction
+                );
+            }
+        });
 
-                {
-                    name: "「Head Admin」",
-                    color: 0xFF4757
-                },
+        // ==================================================
+        // TIMEOUT
+        // ==================================================
 
-                {
-                    name: "「Admin」",
-                    color: 0xFF6B6B
-                },
+        collector.on("end", async collected => {
 
-                // ================================
-                // MODERATION
-                // ================================
+            if (collected.size > 0) return;
 
-                {
-                    name: "「Head Moderator」",
-                    color: 0xFF8C42
-                },
+            try {
 
-                {
-                    name: "「Moderator」",
-                    color: 0xFFA502
-                },
+                await confirmationMessage.edit({
+                    content:
+                        `${client.config.emojis.error} **Role setup cancelled.**\n\n` +
+                        `No confirmation was received within 20 seconds.`,
+                    embeds: [],
+                    components: []
+                });
 
-                {
-                    name: "「Trial Moderator」",
-                    color: 0xFFB142
-                },
+            } catch {}
+        });
+    }
+};
 
-                // ================================
-                // ANNOUNCEMENT
-                // ================================
 
-                {
-                    name: "「Announcement」",
-                    color: 0xF1C40F
-                },
+// ==========================================================
+// SETUP ROLES
+// ==========================================================
 
-                // ================================
-                // PINGS
-                // Normal Discord role color
-                // ================================
+async function setupRoles(
+    client,
+    guild,
+    interaction
+) {
 
-                {
-                    name: "「YT Ping」",
-                    color: 0
-                },
+    try {
 
-                {
-                    name: "「Social Ping」",
-                    color: 0
-                },
+        // ==================================================
+        // ROLE DEFINITIONS
+        // ==================================================
 
-                {
-                    name: "「18+ Ping」",
-                    color: 0
-                },
+        const roleData = [
 
-                // ================================
-                // STAFF
-                // ================================
+            // TOP
+            {
+                name: "「Owner」",
+                color: 0xE74C3C
+            },
 
-                {
-                    name: "「Executive Staff」",
-                    color: 0x8E44AD
-                },
+            {
+                name: "「Head Admin」",
+                color: 0xFF4757
+            },
 
-                {
-                    name: "「Staff Team」",
-                    color: 0x3498DB
-                },
+            {
+                name: "「Admin」",
+                color: 0xFF6B6B
+            },
 
-                {
-                    name: "「Ticket Moderator」",
-                    color: 0x2980B9
-                },
+            // MODERATION
+            {
+                name: "「Head Moderator」",
+                color: 0xFF8C42
+            },
 
-                // ================================
-                // MEMBERS
-                // ================================
+            {
+                name: "「Moderator」",
+                color: 0xFFA502
+            },
 
-                {
-                    name: "「Online Members」",
-                    color: 0x2ECC71
-                },
+            {
+                name: "「Trial Moderator」",
+                color: 0xFFB142
+            },
 
-                {
-                    name: "「Members」",
-                    color: 0x95A5A6
-                },
+            // ANNOUNCEMENT
+            {
+                name: "「Announcement」",
+                color: 0xF1C40F
+            },
 
-                // ================================
-                // SPECIAL
-                // ================================
+            // PINGS — NORMAL COLOR
+            {
+                name: "「YT Ping」",
+                color: 0
+            },
 
-                {
-                    name: "「Retired Staff」",
-                    color: 0x7F8C8D
-                }
-            ];
+            {
+                name: "「Social Ping」",
+                color: 0
+            },
 
-            // ==================================================
-            // CREATE ROLES
-            // ==================================================
+            {
+                name: "「18+ Ping」",
+                color: 0
+            },
 
-            await status.edit({
-                embeds: [
-                    new EmbedBuilder()
-                        .setColor(client.config.embedColor)
-                        .setAuthor({
-                            name: `${client.config.botName} • Role Setup`,
-                            iconURL: client.user.displayAvatarURL()
-                        })
-                        .setDescription(
-                            `${client.config.emojis.loading || "⏳"} **Creating ${roleData.length} roles...**`
-                        )
-                ]
-            });
+            // STAFF
+            {
+                name: "「Executive Staff」",
+                color: 0x8E44AD
+            },
 
-            const createdRoles = [];
+            {
+                name: "「Staff Team」",
+                color: 0x3498DB
+            },
 
-            for (const data of roleData) {
+            {
+                name: "「Ticket Moderator」",
+                color: 0x2980B9
+            },
 
-                try {
+            // MEMBERS
+            {
+                name: "「Online Members」",
+                color: 0x2ECC71
+            },
 
-                    const role = await guild.roles.create({
+            {
+                name: "「Members」",
+                color: 0x95A5A6
+            },
+
+            // SPECIAL
+            {
+                name: "「Retired Staff」",
+                color: 0x7F8C8D
+            }
+        ];
+
+        // ==================================================
+        // STATUS HELPER
+        // ==================================================
+
+        const update = async (text) => {
+
+            try {
+
+                await interaction.editReply({
+                    embeds: [
+                        new EmbedBuilder()
+                            .setColor(client.config.embedColor)
+                            .setAuthor({
+                                name:
+                                    `${client.config.botName} • Role Setup`,
+                                iconURL:
+                                    client.user.displayAvatarURL()
+                            })
+                            .setDescription(text)
+                            .setTimestamp()
+                    ],
+                    components: []
+                });
+
+            } catch {}
+        };
+
+        // ==================================================
+        // DELETE OLD ROLES
+        // ==================================================
+
+        await update(
+            `${client.config.emojis.loading || "⏳"} **Removing existing custom roles...**`
+        );
+
+        const existingRoles = [
+            ...guild.roles.cache.values()
+        ]
+            .filter(role => role.id !== guild.id)
+            .filter(role => !role.managed)
+            .sort(
+                (a, b) =>
+                    b.position - a.position
+            );
+
+        let deleted = 0;
+
+        for (const role of existingRoles) {
+
+            try {
+
+                await role.delete(
+                    "Server role hierarchy reset"
+                );
+
+                deleted++;
+
+            } catch (error) {
+
+                console.log(
+                    `Could not delete role ${role.name}:`,
+                    error.message
+                );
+            }
+        }
+
+        // ==================================================
+        // CREATE NEW ROLES
+        // ==================================================
+
+        await update(
+            `${client.config.emojis.loading || "⏳"} **Creating ${roleData.length} roles...**`
+        );
+
+        const createdRoles = [];
+
+        for (const data of roleData) {
+
+            try {
+
+                const role =
+                    await guild.roles.create({
+
                         name: data.name,
 
-                        // 0 = Discord's default/no color
+                        // Pings have color 0 = normal/default
                         color: data.color,
 
                         hoist: false,
 
-                        // No role will be mentionable
+                        // NONE are mentionable
                         mentionable: false,
 
-                        // No permissions
+                        // No permissions by default
                         permissions: 0n,
 
-                        reason: "Server role hierarchy setup"
+                        reason:
+                            "Server role hierarchy setup"
                     });
 
-                    createdRoles.push(role);
+                createdRoles.push(role);
 
-                } catch (error) {
+            } catch (error) {
 
-                    console.log(
-                        `Could not create role ${data.name}:`,
-                        error.message
-                    );
-                }
+                console.log(
+                    `Could not create role ${data.name}:`,
+                    error.message
+                );
             }
+        }
 
-            // ==================================================
-            // ROLE ORDER
-            // ==================================================
+        // ==================================================
+        // SET ROLE HIERARCHY
+        // ==================================================
 
-            const positions = [];
+        await update(
+            `${client.config.emojis.loading || "⏳"} **Setting role hierarchy...**`
+        );
 
-            for (
-                let i = 0;
-                i < createdRoles.length;
-                i++
-            ) {
+        /*
+         * Discord's position system:
+         *
+         * Owner
+         * ↓
+         * Head Admin
+         * ↓
+         * Admin
+         * ↓
+         * Head Moderator
+         * ↓
+         * Moderator
+         * ↓
+         * Trial Moderator
+         * ↓
+         * Announcement
+         * ↓
+         * YT Ping
+         * ↓
+         * Social Ping
+         * ↓
+         * 18+ Ping
+         * ↓
+         * Executive Staff
+         * ↓
+         * Staff Team
+         * ↓
+         * Ticket Moderator
+         * ↓
+         * Online Members
+         * ↓
+         * Members
+         */
 
-                const role = createdRoles[i];
+        const positions = [];
 
-                positions.push({
-                    role: role.id,
-                    position:
-                        createdRoles.length - i
+        for (
+            let i = 0;
+            i < createdRoles.length;
+            i++
+        ) {
+
+            const role =
+                createdRoles[i];
+
+            positions.push({
+                role: role.id,
+
+                position:
+                    createdRoles.length - i
+            });
+        }
+
+        if (positions.length) {
+
+            try {
+
+                await guild.roles.setPositions({
+                    positions
                 });
+
+            } catch (error) {
+
+                console.log(
+                    "Role positioning error:",
+                    error.message
+                );
             }
+        }
 
-            if (positions.length) {
+        // ==================================================
+        // SUCCESS
+        // ==================================================
 
-                try {
+        await interaction.editReply({
 
-                    await guild.roles.setPositions({
-                        positions
-                    });
+            embeds: [
 
-                } catch (error) {
+                new EmbedBuilder()
+                    .setColor(
+                        client.config.embedColor
+                    )
 
-                    console.log(
-                        "Role positioning error:",
-                        error.message
-                    );
-                }
-            }
+                    .setAuthor({
+                        name:
+                            `${client.config.botName} • Role Setup Complete`,
+                        iconURL:
+                            client.user.displayAvatarURL()
+                    })
 
-            // ==================================================
-            // SUCCESS
-            // ==================================================
+                    .setDescription(
 
-            await status.edit({
+                        `${client.config.emojis.success} **Role Setup Complete!**\n\n` +
+
+                        `${client.config.emojis.role || "🎭"} **Roles Created:** ` +
+                        `\`${createdRoles.length}\`\n` +
+
+                        `${client.config.emojis.error} **Roles Deleted:** ` +
+                        `\`${deleted}\`\n\n` +
+
+                        `**New Role Hierarchy**\n` +
+
+                        createdRoles
+                            .map(role => `> ${role}`)
+                            .join("\n") +
+
+                        `\n\n` +
+
+                        `${client.config.emojis.success} All roles are **non-mentionable**.\n` +
+                        `${client.config.emojis.info || "ℹ️"} Ping roles use the **normal/default color**.`
+                    )
+
+                    .setFooter({
+                        text:
+                            `${client.config.botName} • Role System`
+                    })
+
+                    .setTimestamp()
+            ],
+
+            components: []
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Role Setup Error:",
+            error
+        );
+
+        try {
+
+            await interaction.editReply({
+
                 embeds: [
+
                     new EmbedBuilder()
-                        .setColor(client.config.embedColor)
+                        .setColor(0xED4245)
+
                         .setAuthor({
                             name:
-                                `${client.config.botName} • Roles Created`,
+                                `${client.config.botName} • Setup Failed`,
                             iconURL:
                                 client.user.displayAvatarURL()
                         })
-                        .setDescription(
-                            `${client.config.emojis.success} **Role Setup Complete!**\n\n` +
 
-                            `${client.config.emojis.role || "🎭"} **Roles Created:** ` +
-                            `\`${createdRoles.length}\`\n` +
-
-                            `${client.config.emojis.error} **Roles Deleted:** ` +
-                            `\`${deleted}\`\n\n` +
-
-                            `**Role Hierarchy**\n` +
-                            createdRoles
-                                .map(role => `> ${role}`)
-                                .join("\n") +
-
-                            `\n\n${client.config.emojis.success} All roles are **non-mentionable**.`
-                        )
-                        .setFooter({
-                            text:
-                                `${client.config.botName} • Role System`
-                        })
-                        .setTimestamp()
-                ]
-            });
-
-        } catch (error) {
-
-            console.error(
-                "Role Setup Error:",
-                error
-            );
-
-            return status.edit({
-                embeds: [
-                    new EmbedBuilder()
-                        .setColor(0xED4245)
                         .setDescription(
                             `${client.config.emojis.error} **Role setup failed.**\n\n` +
+
                             `**Reason:**\n` +
-                            `\`${error.message || "Unknown error"}\``
+                            `> ${error.message || "Unknown error"}`
                         )
+
                         .setTimestamp()
-                ]
+                ],
+
+                components: []
             });
-        }
+
+        } catch {}
     }
-};
+}
