@@ -6,7 +6,7 @@ const {
 module.exports = {
     name: "server-template",
     aliases: ["servertemplate"],
-    description: "Create a Discord server template.",
+    description: "Create or update the Discord server template.",
 
     async execute(client, message) {
 
@@ -53,20 +53,63 @@ module.exports = {
         ) {
             return message.reply({
                 content:
-                    `${client.config.emojis.error} I need the **Manage Server** permission to create a server template.`
+                    `${client.config.emojis.error} I need the **Manage Server** permission to manage the server template.`
             });
         }
 
         // ==================================================
-        // CREATE TEMPLATE
+        // GET EXISTING TEMPLATE
         // ==================================================
 
         try {
 
-            const template = await guild.createTemplate(
-                `${guild.name} Template`,
-                `Official server template for ${guild.name}.`
-            );
+            const templates =
+                await guild.fetchTemplates();
+
+            let template;
+
+            // Server can only have one template
+            if (templates.size > 0) {
+
+                template = templates.first();
+
+                // ==================================================
+                // UPDATE EXISTING TEMPLATE
+                // ==================================================
+
+                try {
+
+                    template = await template.edit({
+                        name: `${guild.name} Template`,
+                        description:
+                            `Official server template for ${guild.name}.`
+                    });
+
+                } catch (error) {
+
+                    console.error(
+                        "Template Update Error:",
+                        error
+                    );
+
+                    return message.reply({
+                        content:
+                            `${client.config.emojis.error} **Failed to update the existing server template.**\n\n` +
+                            `**Discord Error:** \`${error.message || "Unknown error"}\``
+                    });
+                }
+
+            } else {
+
+                // ==================================================
+                // CREATE NEW TEMPLATE
+                // ==================================================
+
+                template = await guild.createTemplate(
+                    `${guild.name} Template`,
+                    `Official server template for ${guild.name}.`
+                );
+            }
 
             // ==================================================
             // SUCCESS EMBED
@@ -81,7 +124,7 @@ module.exports = {
                         client.user.displayAvatarURL()
                 })
                 .setDescription(
-                    `${client.config.emojis.success} **Server Template Created**\n\n` +
+                    `${client.config.emojis.success} **Server Template Ready**\n\n` +
 
                     `${client.config.emojis.server} **Server**\n` +
                     `> ${guild.name}\n\n` +
@@ -90,7 +133,10 @@ module.exports = {
                     `> \`${template.code}\`\n\n` +
 
                     `${client.config.emojis.info} **Template Link**\n` +
-                    `> ${template.url}`
+                    `> ${template.url}\n\n` +
+
+                    `${client.config.emojis.success} **Status**\n` +
+                    `> ${templates.size > 0 ? "Updated existing template" : "Created new template"}`
                 )
                 .setFooter({
                     text:
@@ -107,7 +153,7 @@ module.exports = {
         } catch (error) {
 
             // ==================================================
-            // CONSOLE ERROR
+            // ERROR LOG
             // ==================================================
 
             console.error(
@@ -129,11 +175,6 @@ module.exports = {
             );
 
             console.error(
-                "Error Name:",
-                error.name
-            );
-
-            console.error(
                 "Error Message:",
                 error.message
             );
@@ -148,52 +189,7 @@ module.exports = {
             );
 
             // ==================================================
-            // ERROR MESSAGE
-            // ==================================================
-
-            let reason =
-                error.message ||
-                "Unknown Discord API error.";
-
-            if (error.code === 50013) {
-
-                reason =
-                    "The bot does not have the required permissions.";
-
-            } else if (error.code === 50001) {
-
-                reason =
-                    "The bot does not have access to this server.";
-
-            } else if (error.code === 50035) {
-
-                reason =
-                    "Discord rejected the template data.";
-
-            } else if (
-                error.message &&
-                error.message.toLowerCase().includes(
-                    "permission"
-                )
-            ) {
-
-                reason =
-                    "Discord rejected the request because of a permission issue.";
-
-            } else if (
-                error.message &&
-                error.message.toLowerCase().includes(
-                    "template"
-                )
-            ) {
-
-                reason =
-                    error.message;
-
-            }
-
-            // ==================================================
-            // SEND ERROR
+            // ERROR RESPONSE
             // ==================================================
 
             return message.reply({
@@ -207,10 +203,10 @@ module.exports = {
                                 client.user.displayAvatarURL()
                         })
                         .setDescription(
-                            `${client.config.emojis.error} **Failed to create the server template.**\n\n` +
+                            `${client.config.emojis.error} **Failed to create/update the server template.**\n\n` +
 
                             `${client.config.emojis.info} **Reason**\n` +
-                            `> ${reason}\n\n` +
+                            `> ${error.message || "Unknown Discord error."}\n\n` +
 
                             `**Error Code:** \`${error.code || "Unknown"}\``
                         )
