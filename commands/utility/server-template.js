@@ -11,7 +11,7 @@ module.exports = {
     async execute(client, message) {
 
         // ==================================================
-        // BASIC CHECK
+        // SERVER CHECK
         // ==================================================
 
         if (!message.guild) {
@@ -30,13 +30,14 @@ module.exports = {
         // ==================================================
 
         if (
+            !member ||
             !member.permissions.has(
                 PermissionFlagsBits.ManageGuild
             )
         ) {
             return message.reply({
                 content:
-                    `${client.config.emojis.error} You need the **Manage Server** permission to create a server template.`
+                    `${client.config.emojis.error} You need the **Manage Server** permission to use this command.`
             });
         }
 
@@ -105,8 +106,12 @@ module.exports = {
 
         } catch (error) {
 
+            // ==================================================
+            // CONSOLE ERROR
+            // ==================================================
+
             console.error(
-                "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                "========================================"
             );
 
             console.error(
@@ -114,67 +119,107 @@ module.exports = {
             );
 
             console.error(
-                "Code:",
+                "Error Code:",
                 error.code
             );
 
             console.error(
-                "Message:",
-                error.message
-            );
-
-            console.error(
-                "Name:",
-                error.name
-            );
-
-            console.error(
-                "Status:",
+                "HTTP Status:",
                 error.status
             );
 
             console.error(
-                "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                "Error Name:",
+                error.name
+            );
+
+            console.error(
+                "Error Message:",
+                error.message
+            );
+
+            console.error(
+                "Full Error:",
+                error
+            );
+
+            console.error(
+                "========================================"
             );
 
             // ==================================================
-            // SPECIFIC DISCORD ERRORS
+            // ERROR MESSAGE
             // ==================================================
 
-            let errorMessage =
-                `${client.config.emojis.error} **Failed to create the server template.**`;
+            let reason =
+                error.message ||
+                "Unknown Discord API error.";
 
             if (error.code === 50013) {
 
-                errorMessage +=
-                    `\n\nI don't have the required permission to perform this action.`;
+                reason =
+                    "The bot does not have the required permissions.";
 
             } else if (error.code === 50001) {
 
-                errorMessage +=
-                    `\n\nI don't have access to this server.`;
+                reason =
+                    "The bot does not have access to this server.";
 
-            } else if (error.code === 40060) {
+            } else if (error.code === 50035) {
 
-                errorMessage +=
-                    `\n\nThe request was already acknowledged.`;
+                reason =
+                    "Discord rejected the template data.";
 
             } else if (
                 error.message &&
-                error.message.toLowerCase().includes("template")
+                error.message.toLowerCase().includes(
+                    "permission"
+                )
             ) {
 
-                errorMessage +=
-                    `\n\nDiscord rejected the template request.`;
+                reason =
+                    "Discord rejected the request because of a permission issue.";
 
-            } else {
+            } else if (
+                error.message &&
+                error.message.toLowerCase().includes(
+                    "template"
+                )
+            ) {
 
-                errorMessage +=
-                    `\n\n**Discord Error:** \`${error.message || "Unknown error"}\``;
+                reason =
+                    error.message;
+
             }
 
+            // ==================================================
+            // SEND ERROR
+            // ==================================================
+
             return message.reply({
-                content: errorMessage
+                embeds: [
+                    new EmbedBuilder()
+                        .setColor(0xED4245)
+                        .setAuthor({
+                            name:
+                                `${client.config.botName} • Template Error`,
+                            iconURL:
+                                client.user.displayAvatarURL()
+                        })
+                        .setDescription(
+                            `${client.config.emojis.error} **Failed to create the server template.**\n\n` +
+
+                            `${client.config.emojis.info} **Reason**\n` +
+                            `> ${reason}\n\n` +
+
+                            `**Error Code:** \`${error.code || "Unknown"}\``
+                        )
+                        .setFooter({
+                            text:
+                                `${client.config.botName} • Discord API`
+                        })
+                        .setTimestamp()
+                ]
             });
         }
     }
