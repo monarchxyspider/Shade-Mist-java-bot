@@ -9,13 +9,9 @@ const {
 module.exports = {
     name: "setup-roles",
     aliases: ["rolesetup", "resetroles"],
-    description: "Reset and create the server role hierarchy.",
+    description: "Create a complete server role hierarchy.",
 
     async execute(client, message) {
-
-        // ==================================================
-        // SERVER CHECK
-        // ==================================================
 
         if (!message.guild) {
             return message.reply({
@@ -27,7 +23,7 @@ module.exports = {
         const guild = message.guild;
 
         // ==================================================
-        // ADMINISTRATOR CHECK
+        // ADMIN CHECK
         // ==================================================
 
         if (
@@ -42,7 +38,7 @@ module.exports = {
         }
 
         // ==================================================
-        // BOT PERMISSION CHECK
+        // BOT CHECK
         // ==================================================
 
         const botMember = guild.members.me;
@@ -55,90 +51,75 @@ module.exports = {
         ) {
             return message.reply({
                 content:
-                    `${client.config.emojis.error} I need **Manage Roles** permission to setup the roles.`
+                    `${client.config.emojis.error} I need **Manage Roles** permission.`
             });
         }
 
         // ==================================================
-        // WARNING EMBED
+        // WARNING
         // ==================================================
 
-        const warningEmbed = new EmbedBuilder()
+        const warning = new EmbedBuilder()
             .setColor(0xED4245)
             .setAuthor({
-                name: `${client.config.botName} • Role Setup`,
+                name: `${client.config.botName} • Role System`,
                 iconURL: client.user.displayAvatarURL()
             })
             .setDescription(
-                `${client.config.emojis.warning || "⚠️"} **Role Setup Warning**\n\n` +
+                `${client.config.emojis.warning || "⚠️"} **Complete Role Reset**\n\n` +
 
-                `This command will **delete all existing custom roles** and create a new role hierarchy.\n\n` +
+                `This will delete **all existing custom roles** and create a new role system.\n\n` +
 
                 `${client.config.emojis.error} Existing custom roles will be deleted.\n` +
+                `${client.config.emojis.role || "🎭"} **60+ new roles** will be created.\n` +
                 `${client.config.emojis.info || "ℹ️"} Managed/bot roles cannot be deleted.\n` +
-                `${client.config.emojis.role || "🎭"} New roles will be **non-mentionable**.\n\n` +
+                `${client.config.emojis.success} All new roles will be **non-mentionable**.\n\n` +
 
-                `**Are you sure you want to continue?**`
+                `**Do you want to continue?**`
             )
             .setFooter({
-                text: `${client.config.botName} • Only you can use these buttons`
+                text: `${client.config.botName} • Only the command user can confirm`
             })
             .setTimestamp();
-
-        // ==================================================
-        // BUTTONS
-        // ==================================================
 
         const row = new ActionRowBuilder().addComponents(
 
             new ButtonBuilder()
-                .setCustomId(`setup_roles_confirm_${message.author.id}`)
+                .setCustomId(`roles_confirm_${message.author.id}`)
                 .setLabel("Confirm")
                 .setEmoji("✅")
                 .setStyle(ButtonStyle.Danger),
 
             new ButtonBuilder()
-                .setCustomId(`setup_roles_cancel_${message.author.id}`)
+                .setCustomId(`roles_cancel_${message.author.id}`)
                 .setLabel("Cancel")
                 .setEmoji("❌")
                 .setStyle(ButtonStyle.Secondary)
         );
 
-        // ==================================================
-        // SEND CONFIRMATION
-        // ==================================================
-
-        const confirmationMessage = await message.reply({
-            embeds: [warningEmbed],
-            components: [row]
-        });
+        const confirmation =
+            await message.reply({
+                embeds: [warning],
+                components: [row]
+            });
 
         // ==================================================
         // COLLECTOR
         // ==================================================
 
         const collector =
-            confirmationMessage.createMessageComponentCollector({
+            confirmation.createMessageComponentCollector({
                 filter: interaction =>
                     interaction.user.id === message.author.id,
-
                 time: 20000,
                 max: 1
             });
 
-        // ==================================================
-        // BUTTON CLICK
-        // ==================================================
-
         collector.on("collect", async interaction => {
-
-            // ==================================================
-            // CANCEL
-            // ==================================================
 
             if (
                 interaction.customId ===
-                `setup_roles_cancel_${message.author.id}`
+                `roles_cancel_${message.author.id}`
             ) {
 
                 return interaction.update({
@@ -149,34 +130,23 @@ module.exports = {
                 });
             }
 
-            // ==================================================
-            // CONFIRM
-            // ==================================================
-
             if (
                 interaction.customId ===
-                `setup_roles_confirm_${message.author.id}`
+                `roles_confirm_${message.author.id}`
             ) {
 
                 await interaction.update({
                     embeds: [
                         new EmbedBuilder()
                             .setColor(client.config.embedColor)
-                            .setAuthor({
-                                name:
-                                    `${client.config.botName} • Role Setup`,
-                                iconURL:
-                                    client.user.displayAvatarURL()
-                            })
                             .setDescription(
-                                `${client.config.emojis.loading || "⏳"} **Starting role setup...**`
+                                `${client.config.emojis.loading || "⏳"} **Starting complete role setup...**`
                             )
-                            .setTimestamp()
                     ],
                     components: []
                 });
 
-                await setupRoles(
+                await createRoles(
                     client,
                     guild,
                     interaction
@@ -193,15 +163,12 @@ module.exports = {
             if (collected.size > 0) return;
 
             try {
-
-                await confirmationMessage.edit({
+                await confirmation.edit({
                     content:
-                        `${client.config.emojis.error} **Role setup cancelled.**\n\n` +
-                        `No confirmation was received within 20 seconds.`,
+                        `${client.config.emojis.error} **Role setup cancelled.**\n\nNo confirmation received.`,
                     embeds: [],
                     components: []
                 });
-
             } catch {}
         });
     }
@@ -209,10 +176,10 @@ module.exports = {
 
 
 // ==========================================================
-// SETUP ROLES
+// CREATE ROLES
 // ==========================================================
 
-async function setupRoles(
+async function createRoles(
     client,
     guild,
     interaction
@@ -221,104 +188,139 @@ async function setupRoles(
     try {
 
         // ==================================================
-        // ROLE DEFINITIONS
+        // ROLE LIST
         // ==================================================
 
-        const roleData = [
+        const roles = [
 
-            // TOP
-            {
-                name: "「Owner」",
-                color: 0xE74C3C
-            },
+            // ==============================================
+            // LEADERSHIP
+            // ==============================================
 
-            {
-                name: "「Head Admin」",
-                color: 0xFF4757
-            },
+            ["「Owner」", 0xE74C3C],
+            ["「Co-Owner」", 0xC0392B],
+            ["「Founder」", 0xE67E22],
+            ["「Head Admin」", 0xFF4757],
+            ["「Admin」", 0xFF6B6B],
+            ["「Junior Admin」", 0xFF7675],
 
-            {
-                name: "「Admin」",
-                color: 0xFF6B6B
-            },
+            // ==============================================
+            // MANAGEMENT
+            // ==============================================
 
+            ["「Server Manager」", 0x9B59B6],
+            ["「Community Manager」", 0x8E44AD],
+            ["「Executive Staff」", 0x7D3C98],
+            ["「Senior Staff」", 0x6C3483],
+            ["「Staff Team」", 0x3498DB],
+
+            // ==============================================
             // MODERATION
-            {
-                name: "「Head Moderator」",
-                color: 0xFF8C42
-            },
+            // ==============================================
 
-            {
-                name: "「Moderator」",
-                color: 0xFFA502
-            },
+            ["「Head Moderator」", 0xFF8C42],
+            ["「Senior Moderator」", 0xFFA502],
+            ["「Moderator」", 0xFFB142],
+            ["「Junior Moderator」", 0xF39C12],
+            ["「Trial Moderator」", 0xF1C40F],
+            ["「Chat Moderator」", 0xE1B12C],
+            ["「Voice Moderator」", 0xD4AC0D],
 
-            {
-                name: "「Trial Moderator」",
-                color: 0xFFB142
-            },
+            // ==============================================
+            // SECURITY
+            // ==============================================
 
-            // ANNOUNCEMENT
-            {
-                name: "「Announcement」",
-                color: 0xF1C40F
-            },
+            ["「Head Security」", 0x2C3E50],
+            ["「Security Team」", 0x34495E],
+            ["「Anti-Raid Team」", 0x1ABC9C],
+            ["「Anti-Nuke Team」", 0x16A085],
 
-            // PINGS — NORMAL COLOR
-            {
-                name: "「YT Ping」",
-                color: 0
-            },
+            // ==============================================
+            // TICKET TEAM
+            // ==============================================
 
-            {
-                name: "「Social Ping」",
-                color: 0
-            },
+            ["「Ticket Manager」", 0x2980B9],
+            ["「Head Ticket Moderator」", 0x3498DB],
+            ["「Ticket Moderator」", 0x5DADE2],
+            ["「Ticket Support」", 0x85C1E9],
+            ["「Ticket Helper」", 0xAED6F1],
 
-            {
-                name: "「18+ Ping」",
-                color: 0
-            },
+            // ==============================================
+            // ANNOUNCEMENTS
+            // ==============================================
 
-            // STAFF
-            {
-                name: "「Executive Staff」",
-                color: 0x8E44AD
-            },
+            ["「Announcement Team」", 0xF1C40F],
+            ["「Announcement」", 0xF4D03F],
+            ["「News Team」", 0xF7DC6F],
 
-            {
-                name: "「Staff Team」",
-                color: 0x3498DB
-            },
+            // ==============================================
+            // PINGS
+            // ALL NORMAL COLOR
+            // ==============================================
 
-            {
-                name: "「Ticket Moderator」",
-                color: 0x2980B9
-            },
+            ["「Announcement Ping」", 0],
+            ["「Social Ping」", 0],
+            ["「YT Ping」", 0],
+            ["「Twitch Ping」", 0],
+            ["「TikTok Ping」", 0],
+            ["「Instagram Ping」", 0],
+            ["「Giveaway Ping」", 0],
+            ["「Quick Giveaway Ping」", 0],
+            ["「Invite Reward Ping」", 0],
+            ["「Boost Ping」", 0],
+            ["「Event Ping」", 0],
+            ["「Poll Ping」", 0],
+            ["「Update Ping」", 0],
+            ["「18+ Ping」", 0],
 
-            // MEMBERS
-            {
-                name: "「Online Members」",
-                color: 0x2ECC71
-            },
+            // ==============================================
+            // CREATOR
+            // ==============================================
 
-            {
-                name: "「Members」",
-                color: 0x95A5A6
-            },
+            ["「Content Creator」", 0xE84393],
+            ["「Streamer」", 0x9B59B6],
+            ["「YouTuber」", 0xFF0000],
+            ["「TikToker」", 0x111111],
+            ["「Artist」", 0xE056FD],
 
+            // ==============================================
+            // COMMUNITY
+            // ==============================================
+
+            ["「Verified」", 0x2ECC71],
+            ["「Active Member」", 0x27AE60],
+            ["「Online Members」", 0x58D68D],
+            ["「Member」", 0x95A5A6],
+            ["「New Member」", 0xBDC3C7],
+
+            // ==============================================
+            // REWARDS
+            // ==============================================
+
+            ["「Booster」", 0xF47FFF],
+            ["「Top Booster」", 0xFF73FA],
+            ["「Invite Champion」", 0xF1C40F],
+            ["「Invite Reward」", 0xF39C12],
+            ["「Giveaway Winner」", 0xFFD700],
+            ["「Event Winner」", 0x2ECC71],
+
+            // ==============================================
             // SPECIAL
-            {
-                name: "「Retired Staff」",
-                color: 0x7F8C8D
-            }
+            // ==============================================
+
+            ["「VIP」", 0xFFD700],
+            ["「OG Member」", 0xD4AF37],
+            ["「Early Supporter」", 0x5865F2],
+            ["「Partner」", 0x00B894],
+            ["「Friend」", 0x74B9FF],
+            ["「Retired Staff」", 0x7F8C8D]
         ];
 
         // ==================================================
-        // STATUS HELPER
+        // STATUS
         // ==================================================
 
-        const update = async (text) => {
+        const update = async text => {
 
             try {
 
@@ -328,7 +330,7 @@ async function setupRoles(
                             .setColor(client.config.embedColor)
                             .setAuthor({
                                 name:
-                                    `${client.config.botName} • Role Setup`,
+                                    `${client.config.botName} • Role System`,
                                 iconURL:
                                     client.user.displayAvatarURL()
                             })
@@ -342,22 +344,25 @@ async function setupRoles(
         };
 
         // ==================================================
-        // DELETE OLD ROLES
+        // DELETE EXISTING ROLES
         // ==================================================
 
         await update(
             `${client.config.emojis.loading || "⏳"} **Removing existing custom roles...**`
         );
 
-        const existingRoles = [
-            ...guild.roles.cache.values()
-        ]
-            .filter(role => role.id !== guild.id)
-            .filter(role => !role.managed)
-            .sort(
-                (a, b) =>
-                    b.position - a.position
-            );
+        const existingRoles =
+            [...guild.roles.cache.values()]
+                .filter(role =>
+                    role.id !== guild.id
+                )
+                .filter(role =>
+                    !role.managed
+                )
+                .sort(
+                    (a, b) =>
+                        b.position - a.position
+                );
 
         let deleted = 0;
 
@@ -366,7 +371,7 @@ async function setupRoles(
             try {
 
                 await role.delete(
-                    "Server role hierarchy reset"
+                    "Complete role system reset"
                 );
 
                 deleted++;
@@ -374,115 +379,76 @@ async function setupRoles(
             } catch (error) {
 
                 console.log(
-                    `Could not delete role ${role.name}:`,
+                    `Cannot delete ${role.name}:`,
                     error.message
                 );
             }
         }
 
         // ==================================================
-        // CREATE NEW ROLES
+        // CREATE ROLES
         // ==================================================
 
         await update(
-            `${client.config.emojis.loading || "⏳"} **Creating ${roleData.length} roles...**`
+            `${client.config.emojis.loading || "⏳"} **Creating ${roles.length} roles...**`
         );
 
-        const createdRoles = [];
+        const created = [];
 
-        for (const data of roleData) {
+        for (const [name, color] of roles) {
 
             try {
 
                 const role =
                     await guild.roles.create({
 
-                        name: data.name,
+                        name,
 
-                        // Pings have color 0 = normal/default
-                        color: data.color,
+                        color,
 
                         hoist: false,
 
-                        // NONE are mentionable
                         mentionable: false,
 
-                        // No permissions by default
                         permissions: 0n,
 
                         reason:
-                            "Server role hierarchy setup"
+                            "Complete server role system"
                     });
 
-                createdRoles.push(role);
+                created.push(role);
 
             } catch (error) {
 
                 console.log(
-                    `Could not create role ${data.name}:`,
+                    `Cannot create ${name}:`,
                     error.message
                 );
             }
         }
 
         // ==================================================
-        // SET ROLE HIERARCHY
+        // HIERARCHY
         // ==================================================
 
         await update(
-            `${client.config.emojis.loading || "⏳"} **Setting role hierarchy...**`
+            `${client.config.emojis.loading || "⏳"} **Organizing role hierarchy...**`
         );
-
-        /*
-         * Discord's position system:
-         *
-         * Owner
-         * ↓
-         * Head Admin
-         * ↓
-         * Admin
-         * ↓
-         * Head Moderator
-         * ↓
-         * Moderator
-         * ↓
-         * Trial Moderator
-         * ↓
-         * Announcement
-         * ↓
-         * YT Ping
-         * ↓
-         * Social Ping
-         * ↓
-         * 18+ Ping
-         * ↓
-         * Executive Staff
-         * ↓
-         * Staff Team
-         * ↓
-         * Ticket Moderator
-         * ↓
-         * Online Members
-         * ↓
-         * Members
-         */
 
         const positions = [];
 
         for (
             let i = 0;
-            i < createdRoles.length;
+            i < created.length;
             i++
         ) {
 
-            const role =
-                createdRoles[i];
-
             positions.push({
-                role: role.id,
+                role:
+                    created[i].id,
 
                 position:
-                    createdRoles.length - i
+                    created.length - i
             });
         }
 
@@ -497,7 +463,7 @@ async function setupRoles(
             } catch (error) {
 
                 console.log(
-                    "Role positioning error:",
+                    "Hierarchy error:",
                     error.message
                 );
             }
@@ -512,42 +478,41 @@ async function setupRoles(
             embeds: [
 
                 new EmbedBuilder()
-                    .setColor(
-                        client.config.embedColor
-                    )
+                    .setColor(client.config.embedColor)
 
                     .setAuthor({
                         name:
-                            `${client.config.botName} • Role Setup Complete`,
+                            `${client.config.botName} • Role System Ready`,
                         iconURL:
                             client.user.displayAvatarURL()
                     })
 
                     .setDescription(
 
-                        `${client.config.emojis.success} **Role Setup Complete!**\n\n` +
+                        `${client.config.emojis.success} **Role System Successfully Created!**\n\n` +
 
                         `${client.config.emojis.role || "🎭"} **Roles Created:** ` +
-                        `\`${createdRoles.length}\`\n` +
+                        `\`${created.length}\`\n` +
 
                         `${client.config.emojis.error} **Roles Deleted:** ` +
                         `\`${deleted}\`\n\n` +
 
-                        `**New Role Hierarchy**\n` +
+                        `**Hierarchy**\n` +
 
-                        createdRoles
+                        created
                             .map(role => `> ${role}`)
                             .join("\n") +
 
                         `\n\n` +
 
                         `${client.config.emojis.success} All roles are **non-mentionable**.\n` +
+
                         `${client.config.emojis.info || "ℹ️"} Ping roles use the **normal/default color**.`
                     )
 
                     .setFooter({
                         text:
-                            `${client.config.botName} • Role System`
+                            `${client.config.botName} • Complete Role System`
                     })
 
                     .setTimestamp()
@@ -559,7 +524,7 @@ async function setupRoles(
     } catch (error) {
 
         console.error(
-            "Role Setup Error:",
+            "Role System Error:",
             error
         );
 
@@ -581,7 +546,6 @@ async function setupRoles(
 
                         .setDescription(
                             `${client.config.emojis.error} **Role setup failed.**\n\n` +
-
                             `**Reason:**\n` +
                             `> ${error.message || "Unknown error"}`
                         )
