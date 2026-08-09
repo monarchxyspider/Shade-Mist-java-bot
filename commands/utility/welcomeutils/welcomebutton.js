@@ -344,7 +344,7 @@ module.exports = async (client, interaction) => {
 
 
     // ==================================================
-    // EDIT THUMBNAIL
+    // EDIT THUMBAIL
     // ==================================================
 
     if (id === "welcome_edit_thumbnail") {
