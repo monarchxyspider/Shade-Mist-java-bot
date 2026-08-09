@@ -63,6 +63,7 @@ module.exports = {
             return;
         }
 
+
         // ==================================================
         // AUTOCOMPLETE
         // ==================================================
@@ -94,20 +95,19 @@ module.exports = {
             return;
         }
 
+
         // ==================================================
         // BUTTONS
         // ==================================================
-        // Welcome buttons, ticket buttons, etc.
-        // Ye IDs baad mein hum handlers mein use karenge.
 
         if (interaction.isButton()) {
 
             const customId =
                 interaction.customId;
 
-            // ----------------------------------------------
+            // ==================================================
             // WELCOME BUTTONS
-            // ----------------------------------------------
+            // ==================================================
 
             if (
                 customId.startsWith("welcome_")
@@ -116,7 +116,7 @@ module.exports = {
                 try {
 
                     const handler =
-                        require("../utils/welcomeButtons");
+                        require("../utils/welcome/welcomeButton");
 
                     await handler(
                         client,
@@ -130,35 +130,26 @@ module.exports = {
                         error
                     );
 
-                    if (!interaction.replied) {
-
-                        try {
-
-                            await interaction.reply({
-                                content:
-                                    `${client.config.emojis.error} Something went wrong while processing this button.`,
-                                ephemeral: true
-                            });
-
-                        } catch {}
-                    }
+                    await sendError(
+                        client,
+                        interaction,
+                        "Something went wrong while processing this button."
+                    );
                 }
 
                 return;
             }
 
-            // ----------------------------------------------
-            // OTHER BUTTONS
-            // ----------------------------------------------
 
-            // Future:
-            //
-            // if (customId.startsWith("ticket_")) {
-            //     ...
-            // }
+            // ==================================================
+            // OTHER BUTTONS
+            // ==================================================
+
+            // Future ticket buttons etc.
 
             return;
         }
+
 
         // ==================================================
         // MODAL SUBMIT
@@ -169,9 +160,9 @@ module.exports = {
             const customId =
                 interaction.customId;
 
-            // ----------------------------------------------
+            // ==================================================
             // WELCOME MODALS
-            // ----------------------------------------------
+            // ==================================================
 
             if (
                 customId.startsWith("welcome_")
@@ -180,7 +171,7 @@ module.exports = {
                 try {
 
                     const handler =
-                        require("../utils/welcomeModals");
+                        require("../utils/welcome/welcomeModals");
 
                     await handler(
                         client,
@@ -194,18 +185,11 @@ module.exports = {
                         error
                     );
 
-                    if (!interaction.replied) {
-
-                        try {
-
-                            await interaction.reply({
-                                content:
-                                    `${client.config.emojis.error} Something went wrong while processing the form.`,
-                                ephemeral: true
-                            });
-
-                        } catch {}
-                    }
+                    await sendError(
+                        client,
+                        interaction,
+                        "Something went wrong while processing the form."
+                    );
                 }
 
                 return;
@@ -213,6 +197,55 @@ module.exports = {
 
             return;
         }
+
+
+        // ==================================================
+        // CHANNEL SELECT MENU
+        // ==================================================
+
+        if (interaction.isChannelSelectMenu()) {
+
+            const customId =
+                interaction.customId;
+
+            // ==================================================
+            // WELCOME CHANNEL SELECT
+            // ==================================================
+
+            if (
+                customId.startsWith("welcome_")
+            ) {
+
+                try {
+
+                    const handler =
+                        require("../utils/welcome/welcomeSelects");
+
+                    await handler(
+                        client,
+                        interaction
+                    );
+
+                } catch (error) {
+
+                    console.error(
+                        "Welcome Channel Select Error:",
+                        error
+                    );
+
+                    await sendError(
+                        client,
+                        interaction,
+                        "Something went wrong while processing the channel selector."
+                    );
+                }
+
+                return;
+            }
+
+            return;
+        }
+
 
         // ==================================================
         // STRING SELECT MENU
@@ -223,6 +256,10 @@ module.exports = {
             const customId =
                 interaction.customId;
 
+            // ==================================================
+            // WELCOME SELECTS
+            // ==================================================
+
             if (
                 customId.startsWith("welcome_")
             ) {
@@ -230,7 +267,7 @@ module.exports = {
                 try {
 
                     const handler =
-                        require("../utils/welcomeSelects");
+                        require("../utils/welcome/welcomeSelects");
 
                     await handler(
                         client,
@@ -240,22 +277,15 @@ module.exports = {
                 } catch (error) {
 
                     console.error(
-                        "Welcome Select Error:",
+                        "Welcome String Select Error:",
                         error
                     );
 
-                    if (!interaction.replied) {
-
-                        try {
-
-                            await interaction.reply({
-                                content:
-                                    `${client.config.emojis.error} Something went wrong while processing the menu.`,
-                                ephemeral: true
-                            });
-
-                        } catch {}
-                    }
+                    await sendError(
+                        client,
+                        interaction,
+                        "Something went wrong while processing the menu."
+                    );
                 }
 
                 return;
@@ -265,3 +295,41 @@ module.exports = {
         }
     }
 };
+
+
+// ==========================================================
+// ERROR RESPONSE
+// ==========================================================
+
+async function sendError(
+    client,
+    interaction,
+    message
+) {
+
+    const reply = {
+        content:
+            `${client.config.emojis.error} ${message}`,
+        ephemeral: true
+    };
+
+    try {
+
+        if (
+            interaction.replied ||
+            interaction.deferred
+        ) {
+
+            await interaction.followUp(
+                reply
+            );
+
+        } else {
+
+            await interaction.reply(
+                reply
+            );
+        }
+
+    } catch {}
+}
