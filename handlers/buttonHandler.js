@@ -5,51 +5,65 @@ const {
     EmbedBuilder,
     ActionRowBuilder,
     ButtonBuilder,
-    ButtonStyle
+    ButtonStyle,
+    ModalBuilder,
+    TextInputBuilder,
+    TextInputStyle
 } = require("discord.js");
 
 // ==========================================
-// FILE LOCATION
+// FILE
 // ==========================================
 
-const dataFolder = path.join(process.cwd(), "data");
-const configFile = path.join(dataFolder, "welcome.json");
+const dataFolder = path.join(
+    process.cwd(),
+    "data"
+);
+
+const configFile = path.join(
+    dataFolder,
+    "welcome.json"
+);
 
 // ==========================================
-// MAKE SURE DATA FOLDER EXISTS
+// CREATE DATA FOLDER
 // ==========================================
 
 if (!fs.existsSync(dataFolder)) {
+
     fs.mkdirSync(dataFolder, {
         recursive: true
     });
+
 }
 
 // ==========================================
-// MAKE SURE JSON FILE EXISTS
+// CREATE JSON FILE
 // ==========================================
 
 if (!fs.existsSync(configFile)) {
+
     fs.writeFileSync(
         configFile,
         JSON.stringify({}, null, 4)
     );
+
 }
 
 // ==========================================
-// READ WELCOME DATA
+// READ DATA
 // ==========================================
 
 function getWelcomeData() {
 
     try {
 
-        const data = fs.readFileSync(
-            configFile,
-            "utf8"
+        return JSON.parse(
+            fs.readFileSync(
+                configFile,
+                "utf8"
+            )
         );
-
-        return JSON.parse(data);
 
     } catch (error) {
 
@@ -59,197 +73,249 @@ function getWelcomeData() {
         );
 
         return {};
+
     }
+
 }
 
 // ==========================================
-// SAVE WELCOME DATA
+// SAVE DATA
 // ==========================================
 
 function saveWelcomeData(data) {
 
-    try {
+    fs.writeFileSync(
+        configFile,
+        JSON.stringify(
+            data,
+            null,
+            4
+        )
+    );
 
-        fs.writeFileSync(
-            configFile,
-            JSON.stringify(data, null, 4)
-        );
-
-    } catch (error) {
-
-        console.error(
-            "[Welcome] Failed to save welcome.json:",
-            error
-        );
-
-        throw error;
-    }
 }
 
 // ==========================================
-// MAIN BUTTON HANDLER
+// DEFAULT SERVER DATA
 // ==========================================
 
-module.exports = async (client, interaction) => {
+function createServerData(client) {
+
+    return {
+
+        enabled: false,
+
+        channelId: null,
+
+        message: "",
+
+        dmMessage: "",
+
+        embed: {
+
+            color: client.config.embedColor,
+
+            title: "",
+
+            description: "",
+
+            thumbnail: "",
+
+            image: "",
+
+            author: {
+
+                name: "",
+
+                url: "",
+
+                iconURL: ""
+
+            }
+
+        }
+
+    };
+
+}
+
+// ==========================================
+// BUTTON HANDLER
+// ==========================================
+
+module.exports = async (
+    client,
+    interaction
+) => {
 
     try {
-
-        // ======================================
-        // ONLY BUTTONS
-        // ======================================
 
         if (!interaction.isButton()) {
             return;
         }
 
-        // ======================================
-        // ONLY WELCOME BUTTONS
-        // ======================================
-
-        if (!interaction.customId.startsWith("welcome_")) {
+        if (
+            !interaction.customId.startsWith(
+                "welcome_"
+            )
+        ) {
             return;
         }
 
-        // ======================================
-        // GET GUILD
-        // ======================================
-
-        const guild = interaction.guild;
-
-        if (!guild) {
+        if (!interaction.guild) {
 
             return interaction.reply({
-                content: `${client.config.emojis.error} This button can only be used inside a server.`,
+                content:
+                    `${client.config.emojis.error} This button can only be used inside a server.`,
                 ephemeral: true
             });
 
         }
 
-        // ======================================
-        // LOAD DATA
-        // ======================================
+        const guildId =
+            interaction.guild.id;
 
-        const welcomeData = getWelcomeData();
+        const data =
+            getWelcomeData();
 
-        // ======================================
-        // CREATE SERVER DATA IF MISSING
-        // ======================================
+        if (!data[guildId]) {
 
-        if (!welcomeData[guild.id]) {
+            data[guildId] =
+                createServerData(client);
 
-            welcomeData[guild.id] = {
-                enabled: false,
-                channelId: null,
-                message: "",
-                dmMessage: "",
-                embed: {
-                    color: client.config.embedColor,
-                    title: "",
-                    description: "",
-                    thumbnail: "",
-                    image: "",
-                    author: {
-                        name: "",
-                        url: "",
-                        iconURL: ""
-                    }
-                }
-            };
+            saveWelcomeData(data);
 
-            saveWelcomeData(welcomeData);
         }
 
-        const serverData = welcomeData[guild.id];
+        const serverData =
+            data[guildId];
 
         // ======================================
         // ENABLE
         // ======================================
 
-        if (interaction.customId === "welcome_enable") {
+        if (
+            interaction.customId ===
+            "welcome_enable"
+        ) {
 
             serverData.enabled = true;
 
-            saveWelcomeData(welcomeData);
+            saveWelcomeData(data);
 
             return updateMainPanel(
                 client,
                 interaction,
                 serverData
             );
+
         }
 
         // ======================================
         // DISABLE
         // ======================================
 
-        if (interaction.customId === "welcome_disable") {
+        if (
+            interaction.customId ===
+            "welcome_disable"
+        ) {
 
             serverData.enabled = false;
 
-            saveWelcomeData(welcomeData);
+            saveWelcomeData(data);
 
             return updateMainPanel(
                 client,
                 interaction,
                 serverData
             );
+
         }
 
         // ======================================
         // EDIT EMBED
         // ======================================
 
-        if (interaction.customId === "welcome_edit_embed") {
+        if (
+            interaction.customId ===
+            "welcome_edit_embed"
+        ) {
 
             return showEditEmbedPanel(
                 client,
                 interaction,
                 serverData
             );
+
+        }
+
+        // ======================================
+        // EDIT AUTHOR
+        // ======================================
+
+        if (
+            interaction.customId ===
+            "welcome_edit_author"
+        ) {
+
+            const modal =
+                createAuthorModal();
+
+            return interaction.showModal(
+                modal
+            );
+
         }
 
         // ======================================
         // VARIABLES
         // ======================================
 
-        if (interaction.customId === "welcome_variables") {
+        if (
+            interaction.customId ===
+            "welcome_variables"
+        ) {
 
             return showVariables(
                 client,
                 interaction
             );
+
         }
 
         // ======================================
-        // TEST MESSAGE
+        // TEST
         // ======================================
 
-        if (interaction.customId === "welcome_test") {
+        if (
+            interaction.customId ===
+            "welcome_test"
+        ) {
 
             return interaction.reply({
-                content: `${client.config.emojis.success} Welcome test system will be connected next.`,
+                content:
+                    `${client.config.emojis.success} The welcome test system will be connected after the welcome message editor is completed.`,
                 ephemeral: true
             });
+
         }
 
         // ======================================
-        // RETURN TO MAIN
+        // RETURN MAIN
         // ======================================
 
-        if (interaction.customId === "welcome_return_main") {
+        if (
+            interaction.customId ===
+            "welcome_return_main"
+        ) {
 
             return updateMainPanel(
                 client,
                 interaction,
                 serverData
             );
+
         }
-
-        // ======================================
-        // UNKNOWN BUTTON
-        // ======================================
-
-        return;
 
     } catch (error) {
 
@@ -264,16 +330,19 @@ module.exports = async (client, interaction) => {
         ) {
 
             await interaction.reply({
-                content: `${client.config.emojis.error} Something went wrong while processing this button.`,
+                content:
+                    `${client.config.emojis.error} Something went wrong.`,
                 ephemeral: true
             }).catch(() => {});
 
         }
+
     }
+
 };
 
 // ==========================================
-// UPDATE MAIN PANEL
+// MAIN PANEL
 // ==========================================
 
 async function updateMainPanel(
@@ -282,111 +351,122 @@ async function updateMainPanel(
     serverData
 ) {
 
-    const status = serverData.enabled
-        ? "🟢 Enabled"
-        : "🔴 Disabled";
+    const status =
+        serverData.enabled
+            ? "🟢 Enabled"
+            : "🔴 Disabled";
 
-    const channel = serverData.channelId
-        ? `<#${serverData.channelId}>`
-        : "Not configured";
+    const channel =
+        serverData.channelId
+            ? `<#${serverData.channelId}>`
+            : "Not configured";
 
-    const messageStatus = serverData.message
-        ? "Configured"
-        : "Not configured";
+    const messageStatus =
+        serverData.message
+            ? "Configured"
+            : "Not configured";
 
-    const embed = new EmbedBuilder()
-        .setColor(client.config.embedColor)
-        .setAuthor({
-            name: `${client.config.botName} • Welcome System`,
-            iconURL: client.user.displayAvatarURL()
-        })
-        .setTitle("Welcome Configuration")
-        .setDescription(
-            [
-                "Configure your server's welcome system from this panel.",
-                "",
-                `${client.config.emojis.message} **Status**`,
-                `> ${status}`,
-                "",
-                `${client.config.emojis.user} **Welcome Channel**`,
-                `> ${channel}`,
-                "",
-                `${client.config.emojis.moderator} **Welcome Message**`,
-                `> ${messageStatus}`
-            ].join("\n")
-        )
-        .setFooter({
-            text: `${client.config.botName} • Welcome System`
-        })
-        .setTimestamp();
+    const embed =
+        new EmbedBuilder()
+            .setColor(
+                client.config.embedColor
+            )
+            .setAuthor({
+                name:
+                    `${client.config.botName} • Welcome System`,
+                iconURL:
+                    client.user.displayAvatarURL()
+            })
+            .setTitle(
+                "Welcome Configuration"
+            )
+            .setDescription(
+                [
+                    "Configure your server's welcome system from this panel.",
+                    "",
+                    `${client.config.emojis.message} **Status**`,
+                    `> ${status}`,
+                    "",
+                    `${client.config.emojis.user} **Welcome Channel**`,
+                    `> ${channel}`,
+                    "",
+                    `${client.config.emojis.moderator} **Welcome Message**`,
+                    `> ${messageStatus}`
+                ].join("\n")
+            )
+            .setFooter({
+                text:
+                    `${client.config.botName} • Welcome System`
+            })
+            .setTimestamp();
 
-    // ======================================
-    // FIRST ROW
-    // ======================================
+    const toggle =
+        new ButtonBuilder()
+            .setCustomId(
+                serverData.enabled
+                    ? "welcome_disable"
+                    : "welcome_enable"
+            )
+            .setLabel(
+                serverData.enabled
+                    ? "Disable"
+                    : "Enable"
+            )
+            .setStyle(
+                serverData.enabled
+                    ? ButtonStyle.Success
+                    : ButtonStyle.Primary
+            );
 
-    const enableButton = new ButtonBuilder()
-        .setCustomId(
-            serverData.enabled
-                ? "welcome_disable"
-                : "welcome_enable"
-        )
-        .setLabel(
-            serverData.enabled
-                ? "Disable"
-                : "Enable"
-        )
-        .setStyle(
-            serverData.enabled
-                ? ButtonStyle.Success
-                : ButtonStyle.Primary
-        );
+    const edit =
+        new ButtonBuilder()
+            .setCustomId(
+                "welcome_edit_embed"
+            )
+            .setLabel(
+                "Edit Embed"
+            )
+            .setStyle(
+                ButtonStyle.Secondary
+            );
 
-    const editButton = new ButtonBuilder()
-        .setCustomId("welcome_edit_embed")
-        .setLabel("Edit Embed")
-        .setStyle(ButtonStyle.Secondary);
+    const variables =
+        new ButtonBuilder()
+            .setCustomId(
+                "welcome_variables"
+            )
+            .setLabel(
+                "Variables"
+            )
+            .setStyle(
+                ButtonStyle.Secondary
+            );
 
-    // ======================================
-    // SECOND ROW
-    // ======================================
+    const test =
+        new ButtonBuilder()
+            .setCustomId(
+                "welcome_test"
+            )
+            .setLabel(
+                "Test Message"
+            )
+            .setStyle(
+                ButtonStyle.Success
+            );
 
-    const variablesButton = new ButtonBuilder()
-        .setCustomId("welcome_variables")
-        .setLabel("Variables")
-        .setStyle(ButtonStyle.Secondary);
+    const row1 =
+        new ActionRowBuilder()
+            .addComponents(
+                toggle,
+                edit
+            );
 
-    const testButton = new ButtonBuilder()
-        .setCustomId("welcome_test")
-        .setLabel("Test Message")
-        .setStyle(ButtonStyle.Success);
-
-    const row1 = new ActionRowBuilder()
-        .addComponents(
-            enableButton,
-            editButton
-        );
-
-    const row2 = new ActionRowBuilder()
-        .addComponents(
-            variablesButton,
-            testButton
-        );
-
-    // ======================================
-    // UPDATE MESSAGE
-    // ======================================
-
-    if (interaction.deferred || interaction.replied) {
-
-        return interaction.editReply({
-            embeds: [embed],
-            components: [
-                row1,
-                row2
-            ]
-        });
-
-    }
+    const row2 =
+        new ActionRowBuilder()
+            .addComponents(
+                variables,
+                test
+            );
 
     return interaction.update({
         embeds: [embed],
@@ -395,6 +475,7 @@ async function updateMainPanel(
             row2
         ]
     });
+
 }
 
 // ==========================================
@@ -407,97 +488,167 @@ async function showEditEmbedPanel(
     serverData
 ) {
 
-    const embed = new EmbedBuilder()
-        .setColor(
-            serverData.embed?.color ||
-            client.config.embedColor
-        )
-        .setAuthor({
-            name: `${client.config.botName} • Welcome Embed`,
-            iconURL: client.user.displayAvatarURL()
-        })
-        .setTitle("Edit Welcome Embed")
-        .setDescription(
-            [
-                "Customize your welcome embed using the buttons below.",
-                "",
-                "Choose an option to edit the corresponding part of your welcome message."
-            ].join("\n")
-        )
-        .setFooter({
-            text: `${client.config.botName} • Welcome System`
-        })
-        .setTimestamp();
+    const embed =
+        new EmbedBuilder()
+            .setColor(
+                serverData.embed?.color ||
+                client.config.embedColor
+            )
+            .setAuthor({
+                name:
+                    `${client.config.botName} • Welcome Embed`,
+                iconURL:
+                    client.user.displayAvatarURL()
+            })
+            .setTitle(
+                "Edit Welcome Embed"
+            )
+            .setDescription(
+                [
+                    "Customize your welcome embed.",
+                    "",
+                    "Choose an option below to edit your welcome message."
+                ].join("\n")
+            )
+            .setFooter({
+                text:
+                    `${client.config.botName} • Welcome System`
+            })
+            .setTimestamp();
 
-    const row1 = new ActionRowBuilder()
-        .addComponents(
+    const row1 =
+        new ActionRowBuilder()
+            .addComponents(
 
-            new ButtonBuilder()
-                .setCustomId("welcome_edit_author")
-                .setLabel("Edit Author")
-                .setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder()
+                    .setCustomId(
+                        "welcome_edit_author"
+                    )
+                    .setLabel(
+                        "Edit Author"
+                    )
+                    .setStyle(
+                        ButtonStyle.Secondary
+                    ),
 
-            new ButtonBuilder()
-                .setCustomId("welcome_edit_text")
-                .setLabel("Edit Text")
-                .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
+                    .setCustomId(
+                        "welcome_edit_text"
+                    )
+                    .setLabel(
+                        "Edit Text"
+                    )
+                    .setStyle(
+                        ButtonStyle.Primary
+                    ),
 
-            new ButtonBuilder()
-                .setCustomId("welcome_edit_dm")
-                .setLabel("Edit DM Message")
-                .setStyle(ButtonStyle.Secondary)
+                new ButtonBuilder()
+                    .setCustomId(
+                        "welcome_edit_dm"
+                    )
+                    .setLabel(
+                        "Edit DM Message"
+                    )
+                    .setStyle(
+                        ButtonStyle.Secondary
+                    )
 
-        );
+            );
 
-    const row2 = new ActionRowBuilder()
-        .addComponents(
+    const row2 =
+        new ActionRowBuilder()
+            .addComponents(
 
-            new ButtonBuilder()
-                .setCustomId("welcome_edit_description")
-                .setLabel("Edit Description")
-                .setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder()
+                    .setCustomId(
+                        "welcome_edit_description"
+                    )
+                    .setLabel(
+                        "Edit Description"
+                    )
+                    .setStyle(
+                        ButtonStyle.Secondary
+                    ),
 
-            new ButtonBuilder()
-                .setCustomId("welcome_edit_title")
-                .setLabel("Edit Title")
-                .setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder()
+                    .setCustomId(
+                        "welcome_edit_title"
+                    )
+                    .setLabel(
+                        "Edit Title"
+                    )
+                    .setStyle(
+                        ButtonStyle.Secondary
+                    ),
 
-            new ButtonBuilder()
-                .setCustomId("welcome_edit_thumbnail")
-                .setLabel("Edit Thumbnail")
-                .setStyle(ButtonStyle.Secondary)
+                new ButtonBuilder()
+                    .setCustomId(
+                        "welcome_edit_thumbnail"
+                    )
+                    .setLabel(
+                        "Edit Thumbnail"
+                    )
+                    .setStyle(
+                        ButtonStyle.Secondary
+                    )
 
-        );
+            );
 
-    const row3 = new ActionRowBuilder()
-        .addComponents(
+    const row3 =
+        new ActionRowBuilder()
+            .addComponents(
 
-            new ButtonBuilder()
-                .setCustomId("welcome_edit_image")
-                .setLabel("Edit Image")
-                .setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder()
+                    .setCustomId(
+                        "welcome_edit_image"
+                    )
+                    .setLabel(
+                        "Edit Image"
+                    )
+                    .setStyle(
+                        ButtonStyle.Secondary
+                    ),
 
-            new ButtonBuilder()
-                .setCustomId("welcome_random_color")
-                .setLabel("Random Embed")
-                .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
+                    .setCustomId(
+                        "welcome_random_color"
+                    )
+                    .setLabel(
+                        "Random Embed"
+                    )
+                    .setStyle(
+                        ButtonStyle.Primary
+                    ),
 
-            new ButtonBuilder()
-                .setCustomId("welcome_embed_color")
-                .setLabel("Edit Embed Colour")
-                .setStyle(ButtonStyle.Secondary)
+                new ButtonBuilder()
+                    .setCustomId(
+                        "welcome_embed_color"
+                    )
+                    .setLabel(
+                        "Edit Embed Colour"
+                    )
+                    .setStyle(
+                        ButtonStyle.Secondary
+                    )
 
-        );
+            );
 
-    const row4 = new ActionRowBuilder()
-        .addComponents(
+    const row4 =
+        new ActionRowBuilder()
+            .addComponents(
 
-            new ButtonBuilder()
-                .setCustomId("welcome_return_main")
-                .setLabel("Return to Main")
-                .setStyle(ButtonStyle.Danger)
+                new ButtonBuilder()
+                    .setCustomId(
+                        "welcome_return_main"
+                    )
+                    .setLabel(
+                        "Return to Main"
+                    )
+                    .setStyle(
+                        ButtonStyle.Danger
+                    )
 
-        );
+            );
 
     return interaction.update({
         embeds: [embed],
@@ -508,10 +659,11 @@ async function showEditEmbedPanel(
             row4
         ]
     });
+
 }
 
 // ==========================================
-// VARIABLES PANEL
+// VARIABLES
 // ==========================================
 
 async function showVariables(
@@ -519,51 +671,151 @@ async function showVariables(
     interaction
 ) {
 
-    const embed = new EmbedBuilder()
-        .setColor(client.config.embedColor)
-        .setAuthor({
-            name: `${client.config.botName} • Welcome Variables`,
-            iconURL: client.user.displayAvatarURL()
-        })
-        .setTitle("Welcome Variables")
-        .setDescription(
-            [
-                "Use these variables inside your welcome message:",
-                "",
-                "`{user.mention}`",
-                "→ Mentions the new member.",
-                "",
-                "`{user.id}`",
-                "→ New member's ID.",
-                "",
-                "`{user.avatar}`",
-                "→ New member's avatar URL.",
-                "",
-                "`{user.joinat}`",
-                "→ Member's join date.",
-                "",
-                "`{timestamp}`",
-                "→ Current timestamp.",
-                "",
-                "`{guild.members}`",
-                "→ Total server members."
-            ].join("\n")
-        )
-        .setFooter({
-            text: `${client.config.botName} • Welcome System`
-        })
-        .setTimestamp();
+    const embed =
+        new EmbedBuilder()
+            .setColor(
+                client.config.embedColor
+            )
+            .setAuthor({
+                name:
+                    `${client.config.botName} • Welcome Variables`,
+                iconURL:
+                    client.user.displayAvatarURL()
+            })
+            .setTitle(
+                "Welcome Variables"
+            )
+            .setDescription(
+                [
+                    "Use these variables in your welcome message:",
+                    "",
+                    "`{user.mention}`",
+                    "Mentions the new member.",
+                    "",
+                    "`{user.id}`",
+                    "New member's ID.",
+                    "",
+                    "`{user.avatar}`",
+                    "New member's avatar URL.",
+                    "",
+                    "`{user.joinat}`",
+                    "Member's join date.",
+                    "",
+                    "`{timestamp}`",
+                    "Current timestamp.",
+                    "",
+                    "`{guild.members}`",
+                    "Total server members."
+                ].join("\n")
+            )
+            .setFooter({
+                text:
+                    `${client.config.botName} • Welcome System`
+            })
+            .setTimestamp();
 
-    const backButton = new ButtonBuilder()
-        .setCustomId("welcome_return_main")
-        .setLabel("Return to Main")
-        .setStyle(ButtonStyle.Danger);
+    const back =
+        new ButtonBuilder()
+            .setCustomId(
+                "welcome_return_main"
+            )
+            .setLabel(
+                "Return to Main"
+            )
+            .setStyle(
+                ButtonStyle.Danger
+            );
 
-    const row = new ActionRowBuilder()
-        .addComponents(backButton);
+    const row =
+        new ActionRowBuilder()
+            .addComponents(
+                back
+            );
 
     return interaction.update({
         embeds: [embed],
         components: [row]
     });
+
+}
+
+// ==========================================
+// AUTHOR MODAL
+// ==========================================
+
+function createAuthorModal() {
+
+    const modal =
+        new ModalBuilder()
+            .setCustomId(
+                "welcome_author_modal"
+            )
+            .setTitle(
+                "Edit Welcome Author"
+            );
+
+    const name =
+        new TextInputBuilder()
+            .setCustomId(
+                "author_name"
+            )
+            .setLabel(
+                "Author Name"
+            )
+            .setPlaceholder(
+                "Enter author name..."
+            )
+            .setStyle(
+                TextInputStyle.Short
+            )
+            .setRequired(false)
+            .setMaxLength(256);
+
+    const url =
+        new TextInputBuilder()
+            .setCustomId(
+                "author_url"
+            )
+            .setLabel(
+                "Author URL"
+            )
+            .setPlaceholder(
+                "https://example.com"
+            )
+            .setStyle(
+                TextInputStyle.Short
+            )
+            .setRequired(false);
+
+    const icon =
+        new TextInputBuilder()
+            .setCustomId(
+                "author_icon_url"
+            )
+            .setLabel(
+                "Author Icon URL"
+            )
+            .setPlaceholder(
+                "https://example.com/icon.png"
+            )
+            .setStyle(
+                TextInputStyle.Short
+            )
+            .setRequired(false);
+
+    modal.addComponents(
+
+        new ActionRowBuilder()
+            .addComponents(name),
+
+        new ActionRowBuilder()
+            .addComponents(url),
+
+        new ActionRowBuilder()
+            .addComponents(icon)
+
+    );
+
+    return modal;
+
 }
