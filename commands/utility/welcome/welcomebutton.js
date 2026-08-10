@@ -19,7 +19,7 @@ module.exports = async function (client, interaction) {
     }
 
     // ==================================================
-    // CONFIG
+    // CONffIG
     // ==================================================
 
     if (!client.welcomeConfigs) {
