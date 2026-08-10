@@ -6,38 +6,20 @@ const {
     Collection
 } = require("discord.js");
 
-// ==========================================
-// CONFIG
-// ==========================================
-
 const config = require("./config/config");
-
-// ==========================================
-// HANDLERS
-// ==========================================
 
 const commandHandler = require("./handlers/commandHandler");
 const eventHandler = require("./handlers/eventHandler");
 const buttonHandler = require("./handlers/buttonHandler");
-
-// ==========================================
-// CLIENT
-// ==========================================
+const modalHandler = require("./handlers/modalHandler");
 
 const client = new Client({
-
     intents: [
-
         GatewayIntentBits.Guilds,
-
         GatewayIntentBits.GuildMessages,
-
         GatewayIntentBits.GuildMembers,
-
         GatewayIntentBits.MessageContent
-
     ]
-
 });
 
 // ==========================================
@@ -45,7 +27,6 @@ const client = new Client({
 // ==========================================
 
 client.commands = new Collection();
-
 client.aliases = new Collection();
 
 // ==========================================
@@ -55,21 +36,17 @@ client.aliases = new Collection();
 client.config = config;
 
 // ==========================================
-// BUTTON HANDLER
+// INTERACTION HANDLERS
 // ==========================================
 
 client.buttonHandler = buttonHandler;
+client.modalHandler = modalHandler;
 
 // ==========================================
-// LOAD COMMANDS
+// LOAD HANDLERS
 // ==========================================
 
 commandHandler(client);
-
-// ==========================================
-// LOAD EVENTS
-// ==========================================
-
 eventHandler(client);
 
 // ==========================================
