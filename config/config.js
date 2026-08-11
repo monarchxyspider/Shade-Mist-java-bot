@@ -1,6 +1,6 @@
 module.exports = {
 
-    prefix: "S!","s!",
+    prefix: "S!",
 
     botName: "ShadeMist",
 
