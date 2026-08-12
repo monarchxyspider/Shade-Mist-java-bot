@@ -1,6 +1,7 @@
 const { Events } = require("discord.js");
 
 module.exports = {
+
     name: Events.InteractionCreate,
 
     async execute(client, interaction) {
@@ -17,17 +18,24 @@ module.exports = {
                     interaction.customId.startsWith("welcome_")
                 ) {
 
-                    if (client.buttonHandler) {
-                        return client.buttonHandler(
-                            client,
-                            interaction
-                        );
+                    if (!client.buttonHandler) {
+
+                        return interaction.reply({
+                            content:
+                                `${client.config.emojis.error} Button handler is not loaded.`,
+                            ephemeral: true
+                        });
                     }
 
+                    return client.buttonHandler(
+                        client,
+                        interaction
+                    );
                 }
 
                 return;
             }
+
 
             // ==========================================
             // MODAL
@@ -39,17 +47,24 @@ module.exports = {
                     interaction.customId.startsWith("welcome_")
                 ) {
 
-                    if (client.modalHandler) {
-                        return client.modalHandler(
-                            client,
-                            interaction
-                        );
+                    if (!client.modalHandler) {
+
+                        return interaction.reply({
+                            content:
+                                `${client.config.emojis.error} Modal handler is not loaded yet.`,
+                            ephemeral: true
+                        });
                     }
 
+                    return client.modalHandler(
+                        client,
+                        interaction
+                    );
                 }
 
                 return;
             }
+
 
         } catch (error) {
 
@@ -58,19 +73,26 @@ module.exports = {
                 error
             );
 
+
             if (
-                !interaction.replied &&
-                !interaction.deferred
+                interaction.replied ||
+                interaction.deferred
             ) {
-
-                await interaction.reply({
-                    content:
-                        `${client.config.emojis.error} Something went wrong while processing this interaction.`,
-                    ephemeral: true
-                }).catch(() => {});
-
+                return;
             }
 
+
+            return interaction.reply({
+
+                content:
+                    `${client.config.emojis.error} Something went wrong while processing this interaction.`,
+
+                ephemeral: true
+
+            }).catch(() => {});
+
         }
+
     }
+
 };
