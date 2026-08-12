@@ -9,11 +9,12 @@ module.exports = {
         try {
 
             // ==========================================
-            // BUTTON
+            // BUTTON INTERACTION
             // ==========================================
 
             if (interaction.isButton()) {
 
+                // Only handle welcome buttons
                 if (
                     interaction.customId.startsWith("welcome_")
                 ) {
@@ -22,12 +23,12 @@ module.exports = {
 
                         return interaction.reply({
                             content:
-                                `${client.config.emojis.error} Button handler is not loaded.`,
+                                `${client.config.emojis.error} Button handler is not available.`,
                             ephemeral: true
-                        });
+                        }).catch(() => {});
                     }
 
-                    return client.buttonHandler(
+                    return await client.buttonHandler(
                         client,
                         interaction
                     );
@@ -38,7 +39,7 @@ module.exports = {
 
 
             // ==========================================
-            // MODAL
+            // MODAL INTERACTION
             // ==========================================
 
             if (interaction.isModalSubmit()) {
@@ -51,12 +52,12 @@ module.exports = {
 
                         return interaction.reply({
                             content:
-                                `${client.config.emojis.error} Modal handler is not loaded yet.`,
+                                `${client.config.emojis.error} Modal handler is not available.`,
                             ephemeral: true
-                        });
+                        }).catch(() => {});
                     }
 
-                    return client.modalHandler(
+                    return await client.modalHandler(
                         client,
                         interaction
                     );
@@ -69,10 +70,14 @@ module.exports = {
         } catch (error) {
 
             console.error(
-                "[interactionCreate] Error:",
+                "[InteractionCreate] Error:",
                 error
             );
 
+
+            // ==========================================
+            // SAFE ERROR RESPONSE
+            // ==========================================
 
             if (
                 interaction.replied ||
