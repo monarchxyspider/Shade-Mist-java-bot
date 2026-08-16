@@ -10,75 +10,111 @@ const {
 const play = require("play-dl");
 
 module.exports = {
+
     name: "play",
+
     aliases: ["p"],
 
-    async execute(message, args) {
-
-        // ==========================================
-        // CHECK LINK
-        // ==========================================
-
-        if (!args[0]) {
-            return message.reply(
-                "❌ Please provide a song/video link.\n\nExample:\n`s!play https://...`"
-            );
-        }
-
-        const url = args[0];
-
-        // ==========================================
-        // CHECK USER VOICE CHANNEL
-        // ==========================================
-
-        const voiceChannel = message.member?.voice?.channel;
-
-        if (!voiceChannel) {
-            return message.reply(
-                "❌ You need to join a voice channel first."
-            );
-        }
-
-        // ==========================================
-        // CHECK BOT PERMISSIONS
-        // ==========================================
-
-        const permissions = voiceChannel.permissionsFor(message.client.user);
-
-        if (!permissions?.has("Connect")) {
-            return message.reply(
-                "❌ I don't have permission to **Connect** to that voice channel."
-            );
-        }
-
-        if (!permissions?.has("Speak")) {
-            return message.reply(
-                "❌ I don't have permission to **Speak** in that voice channel."
-            );
-        }
-
-        // ==========================================
-        // CHECK URL
-        // ==========================================
-
-        if (!play.yt_validate(url)) {
-            return message.reply(
-                "❌ Please provide a valid YouTube video link."
-            );
-        }
+    async execute(client, message, args) {
 
         try {
 
-            // ======================================
-            // JOIN VOICE CHANNEL
-            // ======================================
+            // ==========================================
+            // CHECK USER
+            // ==========================================
 
-            const connection = joinVoiceChannel({
-                channelId: voiceChannel.id,
-                guildId: voiceChannel.guild.id,
-                adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-                selfDeaf: true
-            });
+            if (!message.guild) {
+                return message.reply(
+                    "❌ This command can only be used inside a server."
+                );
+            }
+
+
+            // ==========================================
+            // CHECK VOICE CHANNEL
+            // ==========================================
+
+            const voiceChannel =
+                message.member?.voice?.channel;
+
+            if (!voiceChannel) {
+
+                return message.reply(
+                    "❌ You need to join a voice channel first."
+                );
+
+            }
+
+
+            // ==========================================
+            // CHECK BOT PERMISSIONS
+            // ==========================================
+
+            const permissions =
+                voiceChannel.permissionsFor(
+                    message.guild.members.me
+                );
+
+            if (
+                !permissions?.has("Connect") ||
+                !permissions?.has("Speak")
+            ) {
+
+                return message.reply(
+                    "❌ I need **Connect** and **Speak** permissions in that voice channel."
+                );
+
+            }
+
+
+            // ==========================================
+            // CHECK LINK
+            // ==========================================
+
+            const url = args[0];
+
+            if (!url) {
+
+                return message.reply(
+                    "❌ Please provide a video link.\n\nExample:\n`s!play https://www.youtube.com/watch?v=...`"
+                );
+
+            }
+
+
+            // ==========================================
+            // VALIDATE URL
+            // ==========================================
+
+            if (!play.yt_validate(url)) {
+
+                return message.reply(
+                    "❌ Please provide a valid YouTube video link."
+                );
+
+            }
+
+
+            // ==========================================
+            // JOIN VOICE
+            // ==========================================
+
+            const connection =
+                joinVoiceChannel({
+
+                    channelId:
+                        voiceChannel.id,
+
+                    guildId:
+                        message.guild.id,
+
+                    adapterCreator:
+                        message.guild.voiceAdapterCreator,
+
+                    selfDeaf: true
+
+                });
+
 
             await entersState(
                 connection,
@@ -86,123 +122,151 @@ module.exports = {
                 30_000
             );
 
-            // ======================================
-            // GET VIDEO INFORMATION
-            // ======================================
 
-            const info = await play.video_info(url);
+            // ==========================================
+            // GET VIDEO INFO
+            // ==========================================
+
+            const info =
+                await play.video_basic_info(url);
 
             const title =
-                info.video_details?.title ||
-                "Unknown Song";
+                info.video_details.title;
 
-            // ======================================
+
+            // ==========================================
             // GET AUDIO STREAM
-            // ======================================
+            // ==========================================
 
-            const stream = await play.stream(url, {
-                quality: 2,
-                discordPlayerCompatibility: true
-            });
+            const stream =
+                await play.stream(url, {
 
-            // ======================================
-            // CREATE AUDIO RESOURCE
-            // ======================================
+                    quality: 2,
 
-            const resource = createAudioResource(
-                stream.stream,
-                {
-                    inputType: stream.type,
-                    inlineVolume: true
-                }
-            );
+                    discordPlayerCompatibility: true
 
-            resource.volume.setVolume(1);
+                });
 
-            // ======================================
-            // CREATE PLAYER
-            // ======================================
 
-            const player = createAudioPlayer();
+            // ==========================================
+            // AUDIO RESOURCE
+            // ==========================================
 
-            // ======================================
-            // PLAY
-            // ======================================
+            const resource =
+                createAudioResource(
+                    stream.stream,
+                    {
+                        inputType:
+                            stream.type
+                    }
+                );
+
+
+            // ==========================================
+            // AUDIO PLAYER
+            // ==========================================
+
+            const player =
+                createAudioPlayer();
+
 
             player.play(resource);
 
             connection.subscribe(player);
 
-            // ======================================
+
+            // ==========================================
             // NOW PLAYING
-            // ======================================
+            // ==========================================
 
             await message.reply(
-                `🎵 **Now Playing**\n` +
-                `> ${title}`
+                `🎵 **Now Playing:** ${title}`
             );
 
-            // ======================================
-            // SONG FINISHED
-            // ======================================
 
-            player.once(
+            // ==========================================
+            // WHEN FINISHED
+            // ==========================================
+
+            player.on(
                 AudioPlayerStatus.Idle,
                 () => {
 
-                    try {
-                        connection.destroy();
-                    } catch {}
+                    connection.destroy();
 
                 }
             );
 
-            // ======================================
+
+            // ==========================================
             // PLAYER ERROR
-            // ======================================
+            // ==========================================
 
             player.on(
                 "error",
                 error => {
 
                     console.error(
-                        "Audio Player Error:",
+                        "[Music] Player Error:",
                         error
                     );
 
-                    try {
-                        connection.destroy();
-                    } catch {}
+                    connection.destroy();
 
                 }
             );
 
-            // ======================================
+
+            // ==========================================
             // CONNECTION ERROR
-            // ======================================
+            // ==========================================
 
             connection.on(
-                "error",
-                error => {
+                VoiceConnectionStatus.Disconnected,
+                async () => {
 
-                    console.error(
-                        "Voice Connection Error:",
-                        error
-                    );
+                    try {
+
+                        await Promise.race([
+
+                            entersState(
+                                connection,
+                                VoiceConnectionStatus.Signalling,
+                                5_000
+                            ),
+
+                            entersState(
+                                connection,
+                                VoiceConnectionStatus.Connecting,
+                                5_000
+                            )
+
+                        ]);
+
+                    } catch {
+
+                        connection.destroy();
+
+                    }
 
                 }
             );
+
 
         } catch (error) {
 
             console.error(
-                "Play Command Error:",
+                "[Play Command] Error:",
                 error
             );
 
+
             return message.reply(
-                "❌ I couldn't play that video. The link may be unavailable or the audio stream could not be created."
-            );
+                "❌ I couldn't play that video. Please check the link and try again."
+            ).catch(() => {});
+
         }
+
     }
+
 };
