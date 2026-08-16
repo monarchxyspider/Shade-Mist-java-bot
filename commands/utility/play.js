@@ -4,7 +4,6 @@ const {
     createAudioResource,
     AudioPlayerStatus,
     VoiceConnectionStatus,
-    NoSubscriberBehavior,
     entersState
 } = require("@discordjs/voice");
 
@@ -13,94 +12,127 @@ const play = require("play-dl");
 module.exports = {
 
     name: "play",
+
     aliases: ["p"],
+
+    description: "Play a YouTube video in your voice channel.",
 
     async execute(client, message, args) {
 
-        // ==========================================
-        // SERVER CHECK
-        // ==========================================
-
-        if (!message.guild) {
-            return message.reply(
-                "❌ This command can only be used inside a server."
-            );
-        }
-
-
-        // ==========================================
-        // VOICE CHANNEL CHECK
-        // ==========================================
-
-        const voiceChannel =
-            message.member?.voice?.channel;
-
-        if (!voiceChannel) {
-            return message.reply(
-                "❌ Join a voice channel first."
-            );
-        }
-
-
-        // ==========================================
-        // LINK CHECK
-        // ==========================================
-
-        const url = args[0];
-
-        if (!url) {
-            return message.reply(
-                "❌ Give me a YouTube video link.\n\nExample:\n`S!play https://youtube.com/watch?v=VIDEO_ID`"
-            );
-        }
-
-
-        // ==========================================
-        // YOUTUBE URL CHECK
-        // ==========================================
-
-        if (!play.yt_validate(url)) {
-            return message.reply(
-                "❌ Please provide a valid YouTube video link."
-            );
-        }
-
-
         try {
 
-            // ==========================================
-            // BOT PERMISSIONS
-            // ==========================================
+            // ==================================================
+            // SERVER CHECK
+            // ==================================================
 
-            const permissions =
-                voiceChannel.permissionsFor(
-                    message.guild.members.me
-                );
+            if (!message.guild) {
 
-            if (
-                !permissions?.has("Connect") ||
-                !permissions?.has("Speak")
-            ) {
                 return message.reply(
-                    "❌ I need **Connect** and **Speak** permissions."
+                    `${client.config.emojis.error} This command can only be used inside a server.`
                 );
+
             }
 
 
-            // ==========================================
-            // GET VIDEO INFO
-            // ==========================================
+            // ==================================================
+            // GET MEMBER DIRECTLY FROM GUILD
+            // ==================================================
 
-            const info =
-                await play.video_basic_info(url);
+            const member =
+                await message.guild.members.fetch(
+                    message.author.id
+                );
 
-            const title =
-                info.video_details.title;
+
+            // ==================================================
+            // VOICE CHANNEL CHECK
+            // ==================================================
+
+            const voiceChannel =
+                member.voice.channel;
 
 
-            // ==========================================
-            // JOIN VC
-            // ==========================================
+            if (!voiceChannel) {
+
+                return message.reply(
+                    `${client.config.emojis.error} You need to join a voice channel first.`
+                );
+
+            }
+
+
+            // ==================================================
+            // BOT MEMBER
+            // ==================================================
+
+            const botMember =
+                message.guild.members.me ||
+                await message.guild.members.fetch(
+                    client.user.id
+                );
+
+
+            // ==================================================
+            // PERMISSIONS
+            // ==================================================
+
+            const permissions =
+                voiceChannel.permissionsFor(
+                    botMember
+                );
+
+
+            if (
+                !permissions ||
+                !permissions.has("Connect") ||
+                !permissions.has("Speak")
+            ) {
+
+                return message.reply(
+                    `${client.config.emojis.error} I need **Connect** and **Speak** permissions in your voice channel.`
+                );
+
+            }
+
+
+            // ==================================================
+            // LINK CHECK
+            // ==================================================
+
+            const url =
+                args[0];
+
+
+            if (!url) {
+
+                return message.reply(
+                    `${client.config.emojis.error} Please provide a YouTube video link.\n\n` +
+                    `Example:\n\`S!play https://www.youtube.com/watch?v=VIDEO_ID\``
+                );
+
+            }
+
+
+            // ==================================================
+            // YOUTUBE URL CHECK
+            // ==================================================
+
+            const validation =
+                play.yt_validate(url);
+
+
+            if (validation !== "video") {
+
+                return message.reply(
+                    `${client.config.emojis.error} Please provide a valid **YouTube video link**.`
+                );
+
+            }
+
+
+            // ==================================================
+            // JOIN VOICE
+            // ==================================================
 
             const connection =
                 joinVoiceChannel({
@@ -119,7 +151,9 @@ module.exports = {
                 });
 
 
-            // Wait until connected
+            // ==================================================
+            // WAIT FOR CONNECTION
+            // ==================================================
 
             await entersState(
                 connection,
@@ -128,96 +162,110 @@ module.exports = {
             );
 
 
-            // ==========================================
+            // ==================================================
+            // GET VIDEO INFORMATION
+            // ==================================================
+
+            const info =
+                await play.video_basic_info(url);
+
+
+            const title =
+                info.video_details.title;
+
+
+            // ==================================================
             // GET AUDIO STREAM
-            // ==========================================
+            // ==================================================
 
             const stream =
-                await play.stream(url, {
+                await play.stream(
+                    url,
+                    {
+                        quality: 2,
 
-                    quality: 2,
+                        discordPlayerCompatibility:
+                            true
+                    }
+                );
 
-                    discordPlayerCompatibility: true
 
-                });
-
-
-            // ==========================================
+            // ==================================================
             // AUDIO RESOURCE
-            // ==========================================
+            // ==================================================
 
             const resource =
                 createAudioResource(
                     stream.stream,
                     {
-                        inputType: stream.type
+                        inputType:
+                            stream.type
                     }
                 );
 
 
-            // ==========================================
+            // ==================================================
             // AUDIO PLAYER
-            // ==========================================
+            // ==================================================
 
             const player =
-                createAudioPlayer({
-
-                    behaviors: {
-                        noSubscriber:
-                            NoSubscriberBehavior.Pause
-                    }
-
-                });
+                createAudioPlayer();
 
 
-            // ==========================================
-            // PLAY
-            // ==========================================
+            // ==================================================
+            // SUBSCRIBE
+            // ==================================================
 
-            connection.subscribe(player);
-
-            player.play(resource);
-
-
-            // ==========================================
-            // NOW PLAYING
-            // ==========================================
-
-            await message.reply(
-                `🎵 **Now Playing**\n${title}`
+            connection.subscribe(
+                player
             );
 
 
-            // ==========================================
-            // AUDIO FINISHED
-            // ==========================================
+            // ==================================================
+            // PLAY
+            // ==================================================
 
-            player.once(
+            player.play(
+                resource
+            );
+
+
+            // ==================================================
+            // NOW PLAYING
+            // ==================================================
+
+            await message.reply(
+                `${client.config.emojis.success} **Now Playing**\n\n` +
+                `🎵 **${title}**`
+            );
+
+
+            // ==================================================
+            // SONG FINISHED
+            // ==================================================
+
+            player.on(
                 AudioPlayerStatus.Idle,
                 () => {
 
-                    setTimeout(() => {
-
-                        try {
-                            connection.destroy();
-                        } catch {}
-
-                    }, 1000);
+                    try {
+                        connection.destroy();
+                    } catch {}
 
                 }
             );
 
 
-            // ==========================================
+            // ==================================================
             // PLAYER ERROR
-            // ==========================================
+            // ==================================================
 
             player.on(
                 "error",
                 error => {
 
                     console.error(
-                        "[Music Player Error]",
+                        "[Music] Audio Player Error:",
                         error
                     );
 
@@ -229,9 +277,9 @@ module.exports = {
             );
 
 
-            // ==========================================
-            // CONNECTION DISCONNECTED
-            // ==========================================
+            // ==================================================
+            // VOICE DISCONNECTED
+            // ==================================================
 
             connection.on(
                 VoiceConnectionStatus.Disconnected,
@@ -270,12 +318,13 @@ module.exports = {
         } catch (error) {
 
             console.error(
-                "[Play Command Error]",
+                "[Play Command] Error:",
                 error
             );
 
+
             return message.reply(
-                "❌ I couldn't play that video. Check the YouTube link and try again."
+                `${client.config.emojis.error} I couldn't play that video.\nPlease check the YouTube link and try again.`
             ).catch(() => {});
 
         }
