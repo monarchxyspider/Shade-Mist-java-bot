@@ -2,27 +2,49 @@ const {
     EmbedBuilder,
     ActionRowBuilder,
     ButtonBuilder,
-    ButtonStyle,
-    PermissionFlagsBits
+    ButtonStyle
 } = require("discord.js");
 
 module.exports = {
 
     name: "electricty",
-    aliases: [khatta],
+
+    aliases: ["khatta"],
+
     description: "Developer-only electricity panel.",
 
     async execute(client, message, args) {
- ==========================================
+
+        // ==========================================
+        // DEVELOPER ONLY
+        // ==========================================
+
+        if (
+            !client.config.developers.includes(
+                message.author.id
+            )
+        ) {
+            return message.reply({
+                content:
+                    `${client.config.emojis.error} You are not authorized to use this command.`
+            });
+        }
+
+        // ==========================================
         // EMBED
         // ==========================================
 
         const embed = new EmbedBuilder()
-            .setColor(client.config.embedColor)
+
+            .setColor(
+                client.config.embedColor
+            )
 
             .setAuthor({
-                name: `${client.config.botName} • Electricity`,
-                iconURL: client.user.displayAvatarURL()
+                name:
+                    `${client.config.botName} • Electricity`,
+                iconURL:
+                    client.user.displayAvatarURL()
             })
 
             .setTitle("⚡ Electricity")
@@ -40,8 +62,10 @@ module.exports = {
             )
 
             .setFooter({
-                text: `${client.config.botName} • Developer Panel`,
-                iconURL: client.user.displayAvatarURL()
+                text:
+                    `${client.config.botName} • Developer Panel`,
+                iconURL:
+                    client.user.displayAvatarURL()
             })
 
             .setTimestamp();
