@@ -83,6 +83,12 @@ module.exports = {
                     .setURL(
                         "https://hello-how--monarchdark67.replit.app"
                     ),
+new ButtonBuilder()
+                    .setLabel("github 2")
+                    .setStyle(ButtonStyle.Link)
+                    .setURL(
+                        "https://monarchxyspider.github.io/happy-birthday-dear-teacher/"
+                    ),
 
                 new ButtonBuilder()
                     .setLabel("GitHub")
